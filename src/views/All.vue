@@ -4,17 +4,33 @@
       <div class="row">
         <div class="col-3 left-rail">
           <div class="card">
-            <div class='selected-endpoint'>
-              <span>/employees#index</span>
-              <button @click="fetch()" type="submit" class="float-right btn btn-primary">Go &raquo;</button>
-            </div>
 
-            <resource-form :query="query" @submit="fetch" :schema="schema" :depth="0"/>
+            <div class="endpoints" :class="{ 'has-selection': endpoint }">
+              <input v-model="endpointSearch" type="search" class="form-control search" placeholder="Search" />
+
+              <a v-for="e in endpoints" :key="e" class="endpoint" :class="{ selected: endpoint === e }">
+                <span v-if="endpoint == e">
+                  <div class="path" @click="deselectEndpoint(e)">&laquo; {{ e }}</div>
+                </span>
+                <span v-else>
+                  <div class="path" @click="selectEndpoint(e)">{{ e }}</div>
+                </span>
+
+                <span v-if="endpoint === e">
+                  <div class="submission clearfix">
+                    <a class="reset" @click="reset()">Reset</a>
+                    <button @click="fetch()" type="submit" class="col-6 float-right btn btn-primary">Submit &raquo;</button>
+                  </div>
+
+                  <resource-form :query="query" @submit="fetch" :schema="schema" :depth="0"/>
+                </span>
+              </a>
+            </div>
           </div>
         </div>
 
         <div class="col-9 main">
-          <form class="query clearfix">
+          <form class="query clearfix" v-if="endpoint">
             <input v-model="query.url" type="text" class="form-control url" placeholder="URL" />
             <input id="copy-url" type="hidden" :value="schema.json.base_url + query.url" />
 
@@ -112,26 +128,46 @@ export default Vue.extend({
       query: null as null | Query,
       currentTab: tabs[0],
       creating: true,
-      isLoading: false
+      isLoading: false,
+      path: null as any,
+      resource: null as any,
+      endpointSearch: null as string | null
     }
   },
   created() {
     this.fetchData()
     let doneCreating = () => { this.creating = false }
-    setTimeout(doneCreating, 1000)
+    // setTimeout(doneCreating, 1000)
   },
   computed: {
-    resource() : any {
-      return this.schema.resourceFor(this.endpoint)
+    endpoints() : any[] {
+      if (this.endpointSearch) {
+        return this.schema.endpoints.filter((e: string) => {
+          return e.includes(this.endpointSearch)
+        })
+      } else {
+        return this.schema.endpoints;
+      }
     }
   },
   methods: {
+    selectEndpoint(endpoint: string) {
+      this.endpoint = endpoint
+      this.resource = this.schema.resourceFor(this.endpoint)
+      this.endpointSearch = null
+      this.reset()
+    },
+    deselectEndpoint(endpoint: string) {
+      this.endpoint = null
+      this.resource = null
+      this.query = null
+    },
     async fetchData() {
-      this.endpoint = '/api/v1/employees#index' // todo get from routes
       let schemaJson = await (await fetch('/schema.json')).json()
       this.schema = new Schema(schemaJson)
-      let resource = this.schema.resourceFor(this.endpoint)
-      this.query = new Query(resource, this.endpoint)
+    },
+    reset() {
+      this.query = new Query(this.resource, this.endpoint)
     },
     async fetch() {
       this.isLoading = true
@@ -147,10 +183,6 @@ export default Vue.extend({
     },
     copyUrl() {
       navigator.clipboard.writeText(`${this.schema.json.base_url}${this.query.url}`)
-      // let copyText = document.getElementById("copy-url") as any;
-      // console.log(copyText)
-      // copyText.select()
-      // document.execCommand("copy");
     },
     stall(stallTime = 3000) {
       return new Promise(resolve => setTimeout(resolve, stallTime));
@@ -163,19 +195,20 @@ export default Vue.extend({
 $success: lighten(green, 60%);
 $danger: lighten(red, 20%);
 $warning: lighten(yellow, 20%);
+$darkCard: #5c666f;
 
 @keyframes slide-up {
     0% {
-        opacity: 1;
-        max-height: 500px;
+      opacity: 1;
+      max-height: 500px;
     }
     100% {
-        opacity: 0;
-        max-height: 0;
-        margin: 0 !important;
-        margin-bottom: 0 !important;
-        padding: 0 !important;
-        overflow: hidden;
+      max-height: 0;
+      padding: 0 !important;
+      margin: 0 !important;
+      opacity: 0;
+      overflow: hidden;
+      border: none;
     }
 }
 
@@ -194,12 +227,26 @@ $warning: lighten(yellow, 20%);
     }
 }
 
-@keyframes slide-right {
+@keyframes slide-card-right {
     0% {
       left: -200px;
     }
     100% {
       left: 25px;
+    }
+}
+
+@keyframes slide-endpoints-down {
+    0% {
+      opacity: 0;
+      max-height: 1px;
+    }
+    99% {
+      max-height: 2000px;
+    }
+    100% {
+      opacity: 1;
+      max-height: none;
     }
 }
 
@@ -236,9 +283,74 @@ $warning: lighten(yellow, 20%);
   cursor: pointer;
 }
 
+.hide, .form-group.hide {
+  animation: slide-up 0.4s ease forwards;
+  max-height: 0;
+  padding: 0 !important;
+  margin: 0 !important;
+  opacity: 0;
+  overflow: hidden;
+  border: none;
+}
+
+.submission {
+  animation: slide-down 0.4s ease forwards;
+  border-bottom: 1px solid black;
+  padding-bottom: 1rem;
+  position: relative;
+  height: 60px;
+
+  a.reset {
+    transition: all 200ms;
+    position: absolute;
+    left: 1.5rem;
+    top: 0.6rem;
+    font-size: 1.3rem;
+
+    &:hover {
+      font-size: 1.4rem;
+      font-weight: bold;
+    }
+
+    &:active {
+      font-size: 1.5rem;
+      color: red;
+      top: 0.3rem;
+    }
+  }
+
+  button {
+    transition: all 200ms;
+    font-weight: bold;
+    position: absolute;
+    top: 0.5rem;
+    right: 1rem;
+
+    &:hover {
+      background: lighten(orange, 10%);
+      font-size: 110%;
+    }
+
+    &:active {
+      transform: scale(1.1);
+      top: 0;
+      background: white !important;
+      color: black !important;
+    }
+  }
+}
+
 .creating {
   .left-rail .card {
-    animation: slide-right 0.7s ease forwards;
+    animation: slide-card-right 0.3s ease forwards;
+
+    .endpoints {
+      overflow: hidden;
+      max-height: 0px;
+      opacity: 0;
+      animation: slide-endpoints-down 0.5s ease forwards;
+      animation-delay: 0.1s;
+    }
   }
 
   .main .query {
@@ -254,10 +366,90 @@ $warning: lighten(yellow, 20%);
   .card {
     position: absolute;
     left: 25px;
+    width: calc(100% - 25px);
   }
 
   .selected-endpoint {
     margin-bottom: 2rem;
+  }
+
+  .endpoints {
+    .search {
+      transition: all 200ms;
+      margin-bottom: 1rem;
+    }
+
+    &.has-selection {
+      .search {
+        max-height: 0;
+        opacity: 0;
+        padding: 0;
+        margin: 0;
+      }
+
+      .endpoint {
+        &.selected {
+          max-height: 2000px;
+
+          .path {
+            color: lighten(orange, 20%);
+            font-size: 120%;
+            font-weight: bold;
+            padding-bottom: 1rem;
+          }
+        }
+
+        &:not(.selected) {
+          // animation: slide-up 0.5s linear forwards;
+          opacity: 0;
+          max-height: 0;
+          margin: 0 !important;
+          margin-bottom: 0 !important;
+          padding: 0 !important;
+          // overflow: hidden;
+          border: none;
+        }
+      }
+    }
+
+    &:not(.has-selection) {
+      .endpoint {
+        &:hover {
+          transition: all 0.1s;
+          font-size: 110%;
+          font-weight: bold;
+          color: lighten(orange, 40%);
+        }
+      }
+    }
+
+    .endpoint {
+      transition: all 0.3s;
+      max-height: 200px;
+      display: block;
+      padding: 0.5rem 0 0.5rem 0;
+      overflow: hidden;
+    }
+
+    // todo some type of endpoint begin/end
+    .endpoint {
+      display: block;
+      color: #f0f0f0;
+      overflow: hidden;
+      border-top: 1px dotted black;
+
+      &:hover {
+        color: #f0f0f0;
+      }
+
+      &.selected {
+        border-top: none;
+      }
+
+      &:first-child {
+        border-top: none;
+      }
+    }
   }
 }
 
@@ -321,11 +513,12 @@ $warning: lighten(yellow, 20%);
   }
 
   .type-boolean {
-    color: #E040FB;
+    color: lighten(#E040FB, 20%);
+    letter-spacing: 2px;
+    font-weight: bold;
   }
 }
 
-$darkCard: #5c666f;
 
 pre {
   text-align: left;

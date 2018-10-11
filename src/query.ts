@@ -14,6 +14,7 @@ export class Query {
   relationships: any
   fields: any
   relationshipPath: string
+  editingRelationship: boolean
 
   constructor(resource: any, endpoint?: string, relationshipPath?: string) {
     this.resource = resource
@@ -28,6 +29,7 @@ export class Query {
     this.relationships = {}
     this.fields = {}
     this.relationshipPath = relationshipPath
+    this.editingRelationship = false
   }
 
   generateParams() {
@@ -65,6 +67,7 @@ export class Query {
 
       Object.keys(r.attributes).forEach((a) => {
         let value = r.attributes[a]
+        // todo: blows up on polymorphic resources (tasks)
         let type = this.resource.attributes[a].type
         let obj = {} as any
         obj[a] = { value, type }

@@ -1,10 +1,9 @@
 <template>
   <div class="resource-form">
     <form v-on:submit.prevent="$emit('submit')" class="config">
-      <!-- todo: hidden button form submit, actual button fires -->
       <button style="display: none" v-if="!isRelationship" type="hidden" class="btn btn-primary">Submit</button>
 
-      <div class="query-inputs" :class="{ hide: editingRelationship }">
+      <div class="query-inputs" :class="{ hide: query.editingRelationship }">
         <div class="section filters first form-group">
           <label>Filters</label>
           <a @click="addFilter" class="add">Add +</a>
@@ -63,18 +62,16 @@
             <a @click="removePagination()" class='remove col-1'>x</a>
           </div>
         </div>
-
       </div>
 
+      <div class="relationships section form-group" :class="{ 'editing-subrelationship': query.editingRelationship, nested: (query.editingRelationship && isRelationship), 'active-subrelationship': isActiveSubrelationship, 'inactive-subrelationship': !isActiveSubrelationship, ['depth-'+depth]: true }">
+        <label v-if="!(query.editingRelationship && isRelationship)">Relationships</label>
 
-      <div class="relationships section form-group" :class="{ 'editing-subrelationship': editingRelationship, nested: (editingRelationship && isRelationship), 'active-subrelationship': isActiveSubrelationship }">
-        <label v-if="!(editingRelationship && isRelationship)">Relationships</label>
-
-        <div v-for="(config, name) in query.resource.relationships" :key="name" class="relationship clearfix" :class="{ ['depth-'+depth]: true, selected: query.relationships[name], hide: (editingRelationship && editingRelationship != query.relationships[name]) }">
+        <div v-for="(config, name) in query.resource.relationships" :key="name" class="relationship clearfix" :class="{ ['depth-'+depth]: true, selected: query.relationships[name], hide: (query.editingRelationship && query.editingRelationship != query.relationships[name]) }">
           <a class='toggle clearfix' @click="toggleRelationship(name, config)">
             <div class="float-left name">{{name}}</div>
 
-            <span v-if="subRelationshipNames.length === 0">
+            <span v-if="isActiveSubrelationship">
               <div v-if="query.relationships[name]" class="badge badge-pill badge-info">&#x2713;</div>
             </span>
           </a>
@@ -84,32 +81,26 @@
       </div>
 
       <div v-for="(config, name) in query.resource.relationships" :key="name">
-        <div v-if="query.relationships[name]" :class="{ hidden: editingRelationship != query.relationships[name] }">
+        <div v-if="query.relationships[name]" :class="{ hidden: query.editingRelationship != query.relationships[name] }">
           <resource-form
             :query="query.relationships[name]"
             :schema="schema"
             :is-relationship="true"
             @editRelationship="onSubrelationshipEdit"
+            @doneEditRelationship="onSubrelationshipDoneEdit"
             :depth="depth+1"
           />
         </div>
       </div>
 
-      <div class="fields section form-group" :class="{ hide: editingRelationship }">
+      <div class="fields section form-group" :class="{ hide: query.editingRelationship }">
         <label>Fields</label>
 
-        <div v-if="name != 'id'" v-for="(config, name) in query.resource.attributes" :key="name" class="field clearfix" :class="{ selected: query.fields[name] }">
-          <a @click="toggleField(name, config)" class="toggle">
+        <div v-if="config.readable && name != 'id'" v-for="(config, name) in query.resource.attributes" :key="name" class="field clearfix" :class="{ selected: query.fields[name] }">
+          <a @click="toggleField(name, config)" class="toggle clearfix">
             <span class="name">{{name}}</span>
             <span v-if="query.fields[name]" class="badge badge-pill badge-info">&#x2713;</span>
           </a>
-
-          <!-- <div v-if="query.fields[name]" class="controls">
-            <a @click="deselectField(name)">Remove</a>
-          </div>
-          <div v-else class="controls">
-            <a @click.prevent="selectField(name, config)">Select</a>
-          </div> -->
         </div>
       </div>
 
@@ -126,16 +117,16 @@ export default Vue.extend({
   props: ['query', 'isRelationship', 'schema', 'depth'],
   data() {
     return {
-      editingRelationship: null as any,
-      subRelationshipNames: [] as string[]
+      subRelationshipNames: [] as string[],
+      isActiveSubrelationship: false as boolean
     }
   },
   created() {
   },
   computed: {
-    isActiveSubrelationship() : boolean {
-      return this.subRelationshipNames.length == 0
-    }
+    // isActiveSubrelationship() : boolean {
+    //   return this.subRelationshipNames.length == 0
+    // }
   },
   methods: {
     addFilter() {
@@ -175,16 +166,12 @@ export default Vue.extend({
       this.$set(this.query.relationships, name, subQuery)
     },
     removeRelationship(name: string) {
-      this.editingRelationship = false
       this.$delete(this.query.relationships, name)
-      let index = this.subRelationshipNames.indexOf(name)
-      this.subRelationshipNames.splice(index, 1)
+      this.doneEditingRelationship(name)
     },
     toggleRelationship(name: string, config: any) {
-      if (this.editingRelationship) {
-        this.editingRelationship = false
-        let index = this.subRelationshipNames.indexOf(name)
-        this.subRelationshipNames.splice(index, 1)
+      if (this.query.editingRelationship) {
+        this.doneEditingRelationship(name)
       } else if (this.query.relationships[name]) {
         this.editRelationship(name, this.query.relationships[name])
       } else {
@@ -193,12 +180,13 @@ export default Vue.extend({
     },
     editRelationship(name: string, subQuery: any) {
       this.$emit('editRelationship', name)
-      this.editingRelationship = subQuery
+      this.query.editingRelationship = subQuery
+      this.isActiveSubrelationship = true
     },
     doneEditingRelationship(name: string) {
-      this.editingRelationship = false
-      let index = this.subRelationshipNames.indexOf(name)
-      this.subRelationshipNames.splice(index, 1)
+      this.query.editingRelationship = false
+      this.isActiveSubrelationship = false
+      this.$emit('doneEditRelationship', name)
     },
     toggleField(name: string) {
       if (this.query.fields[name]) {
@@ -208,8 +196,10 @@ export default Vue.extend({
       }
     },
     onSubrelationshipEdit(name: string) {
-      this.$emit('editRelationship', name)
-      this.subRelationshipNames.push(name)
+      this.isActiveSubrelationship = false
+    },
+    onSubrelationshipDoneEdit(name: string) {
+      this.isActiveSubrelationship = true
     }
   }
 })
@@ -226,7 +216,9 @@ $warning: lighten(yellow, 20%);
 }
 
 .query-inputs {
-  animation: slide-down 0.4s ease forwards;
+  &:not(.hide) {
+    animation: slide-down 0.4s ease forwards;
+  }
 }
 
 .section {
@@ -252,10 +244,6 @@ $warning: lighten(yellow, 20%);
   display: none;
 }
 
-.hide {
-  animation: slide-up 0.4s ease forwards;
-}
-
 .form-row {
   margin-bottom: 1rem;
 }
@@ -270,6 +258,11 @@ $warning: lighten(yellow, 20%);
     text-align: left;
   }
 
+  > label {
+    display: block;
+    transition: all 200ms;
+  }
+
   .relationship {
     position: relative;
 
@@ -281,10 +274,15 @@ $warning: lighten(yellow, 20%);
       display: none;
     }
 
+    .name {
+      transition: all 200ms;
+    }
+
     &:not(.selected) {
       &:hover {
         .name {
           color: $warning;
+          font-size: 110%;
         }
       }
     }
@@ -292,6 +290,8 @@ $warning: lighten(yellow, 20%);
     &.selected {
       .name {
         color: $success;
+        font-size: 110%;
+        font-weight: bold;
       }
 
       &:hover {
@@ -304,19 +304,56 @@ $warning: lighten(yellow, 20%);
     .remove-field {
       position: absolute;
       right: 0;
-      top: 0;
+      top: 0.5rem;
       color: $danger !important;
     }
   }
 
   &.editing-subrelationship {
     margin-top: 0;
-    padding-top: 0;
-    border: none;
+    padding-top: 1rem;
     margin-bottom: 0;
+
+    &:not(.depth-0) {
+      padding-top: 0;
+      border: none;
+
+      > label {
+        max-height: 0;
+        opacity: 0;
+        margin: 0;
+        padding: 0;
+      }
+
+      .toggle {
+        padding: 0;
+      }
+    }
+
+    &.inactive-subrelationship, &.active-subrelationship {
+      .relationship .toggle {
+        padding: 0
+      }
+
+      a.remove-field {
+        top: 0.1rem;
+      }
+    }
+
+    &.inactive-subrelationship {
+      .toggle .name {
+        font-weight: normal;
+        color: #f0f0f0;
+      }
+    }
 
     &.active-subrelationship {
       margin-bottom: 1rem;
+
+      .relationship .name {
+        font-size: 110%;
+        font-weight: bold;
+      }
     }
 
     .relationship {
@@ -326,8 +363,37 @@ $warning: lighten(yellow, 20%);
 
     @for $i from 0 through 10 {
       .relationship.selected.depth-#{$i} {
-        padding-left: $i*10px;
+        padding-left: $i*14px;
         padding-top: 0;
+
+        @if $i != 0 {
+          // margin-top: -3px;
+        }
+      }
+    }
+  }
+}
+
+.fields {
+  .field {
+    a .name {
+      transition: all 200ms;
+    }
+
+    &.selected {
+      a .name {
+        color: $success;
+        font-weight: bold;
+        font-size: 110%;
+      }
+    }
+
+    &:not(.selected) {
+      &:hover {
+        a .name {
+          font-size: 110%;
+          color: $warning;
+        }
       }
     }
   }
@@ -374,7 +440,7 @@ $warning: lighten(yellow, 20%);
       border-bottom: none;
     }
 
-    a {
+    a.toggle {
       padding-top: 0.5rem;
       padding-bottom: 0.5rem;
       display: block;

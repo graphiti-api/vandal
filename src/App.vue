@@ -10,6 +10,8 @@ $nav-tabs-link-active-bg: darken(grey, 40%);
 $success: lighten(green, 60%);
 $danger: lighten(red, 20%);
 $warning: lighten(yellow, 20%);
+$darkCard: #5c666f;
+$list-group-bg: $darkCard;
 
 .sizeable-link {
   display: inline-block;

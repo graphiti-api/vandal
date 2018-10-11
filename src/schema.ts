@@ -17,4 +17,14 @@ export class Schema {
     let resourceName = this.json.endpoints[path]['actions'][action].resource
     return this.getResource(resourceName)
   }
+
+  get endpoints() {
+    let endpoints = [] as any
+    Object.keys(this.json.endpoints).forEach((path) => {
+      Object.keys(this.json.endpoints[path].actions).forEach((action) => {
+        endpoints.push(`${path}#${action}`)
+      })
+    })
+    return endpoints
+  }
 }
