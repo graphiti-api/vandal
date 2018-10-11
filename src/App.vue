@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div id="app" class="d-flex flex-column h-100">
     <router-view/>
   </div>
 </template>
@@ -10,6 +10,26 @@ $nav-tabs-link-active-bg: darken(grey, 40%);
 $success: lighten(green, 60%);
 $danger: lighten(red, 20%);
 $warning: lighten(yellow, 20%);
+
+.sizeable-link {
+  display: inline-block;
+  transition: all 200ms;
+
+  &:hover {
+    text-decoration: none;
+    transform: scale(1.15);
+  }
+}
+
+.loading-area {
+  transition: all 200ms;
+
+  &.loading-area-active {
+    transform: scale(0.97);
+    filter: blur(2px);
+    opacity: 0.5;
+  }
+}
 
 .alert-success, .alert-danger {
   position: fixed !important;
@@ -80,8 +100,12 @@ $warning: lighten(yellow, 20%);
 }
 
 body {
-  height:100vh;
+  // height:100vh;
   background: url('/assets/img/squares.png');
+
+  .left-rail {
+    flex-grow: 1;
+  }
 }
 
 .card {

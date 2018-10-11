@@ -1,28 +1,32 @@
 <template>
-  <div class="graphici">
+  <div class="graphici" :class="{ creating: creating }">
     <div v-if="schema">
       <div class="row">
-        <div class="col-3 left-rail" :class="{ creating: creating }">
+        <div class="col-3 left-rail">
           <div class="card">
-            <div class='selected-endpoint'>/employees#index</div>
+            <div class='selected-endpoint'>
+              <span>/employees#index</span>
+              <button @click="fetch()" type="submit" class="float-right btn btn-primary">Go &raquo;</button>
+            </div>
 
-            <resource-form :request="request" :resource="resource" />
+            <resource-form :query="query" @submit="fetch" :schema="schema" :depth="0"/>
           </div>
         </div>
 
         <div class="col-9 main">
-          <form>
-            <div class="row">
-              <div class="col">
-                <div class="container">
-                  <input v-model="request.url" type="text" class="url form-control" placeholder="URL" />
-                </div>
-              </div>
+          <form class="query clearfix">
+            <input v-model="query.url" type="text" class="form-control url" placeholder="URL" />
+            <input id="copy-url" type="hidden" :value="schema.json.base_url + query.url" />
+
+            <div class="btn-group url-controls">
+              <a @click="copyUrl()" class="btn btn-secondary">Copy</a>
+              <a :href="query.url" target="_blank" class="btn btn-secondary">Tab</a>
+              <a class="btn btn-secondary">Curl</a>
             </div>
           </form>
 
           <div :class="'request card '+ currentTab.name+'' " >
-            <div v-if="request && request.ready">
+            <div v-if="query && query.ready">
               <div class="card-header">
                 <ul class="nav nav-tabs card-header-tabs">
                   <li class="nav-item">
@@ -39,23 +43,31 @@
 
               <div class="card-body">
                 <div v-if="currentTab.name == 'raw'">
-                  <pre v-highlightjs v-if="request.json">
-                    <code class="json">{{ request.json }}</code>
+                  <pre v-highlightjs v-if="query.json">
+                    <code class="json">{{ query.json }}</code>
                   </pre>
                 </div>
 
-                <div v-if="currentTab.name == 'results'">
-                  <table class="table table-hover table-borderless">
+                <div class="loading-area" v-if="currentTab.name == 'results'" :class="{ 'loading-area-active': isLoading }">
+                  <table class="results table table-hover table-borderless">
                     <thead>
-                      <th v-for="header in request.headers" :key="header">
+                      <th v-for="header in query.headers" :key="header">
                         {{ header }}
                       </th>
                     </thead>
 
                     <tbody>
-                      <tr v-for="row in request.rows" :key="row.id">
-                        <td v-for="(value, key) in row" :key="key">
-                          {{ value }}
+                      <tr v-for="row in query.rows" :key="row.id.value">
+                        <td v-for="(config, key) in row" :key="key" :class="{ ['type-'+config.type]: true }">
+                          <span v-if="config.type == 'datetime'">
+                            {{ config.value | dateTimeType }}
+                          </span>
+                          <span v-else-if="config.type == 'date'">
+                            {{ config.value | dateType }}
+                          </span>
+                          <span v-else>
+                            {{ config.value }}
+                          </span>
                         </td>
                       </tr>
                     </tbody>
@@ -79,7 +91,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import { Schema } from '@/schema'
-import { Request } from '@/request'
+import { Query } from '@/query'
 import ResourceForm from '@/components/ResourceForm.vue'
 
 const tabs = [
@@ -97,9 +109,10 @@ export default Vue.extend({
     return {
       endpoint: null as any,
       schema: null as any,
-      request: null as null | Request,
+      query: null as null | Query,
       currentTab: tabs[0],
-      creating: true
+      creating: true,
+      isLoading: false
     }
   },
   created() {
@@ -110,9 +123,6 @@ export default Vue.extend({
   computed: {
     resource() : any {
       return this.schema.resourceFor(this.endpoint)
-    },
-    requestPath() : any {
-      return '/api/v1/employees.json'
     }
   },
   methods: {
@@ -120,14 +130,30 @@ export default Vue.extend({
       this.endpoint = '/api/v1/employees#index' // todo get from routes
       let schemaJson = await (await fetch('/schema.json')).json()
       this.schema = new Schema(schemaJson)
-      this.request = new Request(this.endpoint)
+      let resource = this.schema.resourceFor(this.endpoint)
+      this.query = new Query(resource, this.endpoint)
     },
     async fetch() {
-      await this.request.fire()
+      this.isLoading = true
+      let then = Date.now()
+      await this.query.fire()
+      let now = Date.now()
+      // Force min of 100ms
+      await this.stall(100-(now - then))
+      this.isLoading = false
     },
     tab(index: number) {
-      console.log(index)
       this.currentTab = tabs[index]
+    },
+    copyUrl() {
+      navigator.clipboard.writeText(`${this.schema.json.base_url}${this.query.url}`)
+      // let copyText = document.getElementById("copy-url") as any;
+      // console.log(copyText)
+      // copyText.select()
+      // document.execCommand("copy");
+    },
+    stall(stallTime = 3000) {
+      return new Promise(resolve => setTimeout(resolve, stallTime));
     }
   }
 });
@@ -146,8 +172,10 @@ $warning: lighten(yellow, 20%);
     100% {
         opacity: 0;
         max-height: 0;
-        margin: 0;
-        padding: 0;
+        margin: 0 !important;
+        margin-bottom: 0 !important;
+        padding: 0 !important;
+        overflow: hidden;
     }
 }
 
@@ -156,9 +184,13 @@ $warning: lighten(yellow, 20%);
         opacity: 0;
         max-height: 0;
     }
-    100% {
+    99% {
         opacity: 1;
         max-height: 500px;
+    }
+    100% {
+        opacity: 1;
+        max-height: 1000px;
     }
 }
 
@@ -171,6 +203,32 @@ $warning: lighten(yellow, 20%);
     }
 }
 
+@keyframes move-down-query {
+    0% {
+        transform: translateY(-200px);
+
+        .url-controls {
+          right: 0;
+        }
+    }
+    100% {
+        transform: translateY(0px);
+
+        .url-controls {
+          right: 2rem;
+        }
+    }
+}
+
+@keyframes move-up-request {
+    0% {
+        transform: translateY(500px);
+    }
+    100% {
+        transform: translateY(0px);
+    }
+}
+
 .graphici {
   margin-top: 3rem;
 }
@@ -178,135 +236,60 @@ $warning: lighten(yellow, 20%);
   cursor: pointer;
 }
 
-.url, .main .results {
-  animation: slide-down 1s ease;
+.creating {
+  .left-rail .card {
+    animation: slide-right 0.7s ease forwards;
+  }
+
+  .main .query {
+    animation: move-down-query 0.5s ease forwards;
+  }
+
+  .main .request {
+    animation: move-up-request 0.5s ease forwards;
+  }
 }
 
 .left-rail {
-  &.creating {
-    .card {
-      animation: slide-right 0.5s ease;
-    }
-  }
-
   .card {
     position: absolute;
     left: 25px;
-
-    .form-group {
-      animation: slide-down 1s ease;
-    }
-
-    .editingRelationship {
-      form {
-        .form-group.top-level:not(.relationships) {
-          overflow: hidden;
-          animation: slide-up 0.3s ease forwards;
-        }
-
-        .form-group.top-level.relationships {
-          margin: 0;
-
-          .relationship.selected {
-            border-bottom: none;
-          }
-
-          .relationship:not(.selected) {
-            display: none;
-          }
-        }
-      }
-    }
-  }
-
-  .section {
-    margin-top: 2rem;
-    border-top: 1px solid darken(grey, 25%);
-    padding-top: 1rem;
-
-    &.first {
-      margin-top: 0;
-    }
   }
 
   .selected-endpoint {
     margin-bottom: 2rem;
   }
-
-  .config {
-    .filter-name {
-      margin-right: 5px;
-    }
-
-    button {
-      float: right;
-      margin-top: 2rem;
-    }
-  }
-
-  .remove {
-    float: right;
-    margin-top: 3px;
-    color: $danger !important;
-    margin-right: 3px;
-  }
-
-  .relationships, .fields {
-    .relationship, .field {
-      border-bottom: 1px solid black;
-      padding-bottom: 0.5rem;
-      padding-top: 0.5rem;
-      text-align: left;
-      cursor: pointer;
-
-      &:last-child {
-        border-bottom: none;
-      }
-
-      &.selected {
-        .name {
-          color: $success;
-        }
-      }
-
-      a {
-        display: block;
-      }
-
-      .controls {
-        float: right;
-
-        a {
-          display: inline;
-          padding-left: 10px;
-
-          &:first-child {
-            padding-right: 10px;
-          }
-
-          &:nth-of-type(2) {
-            border-left: 1px solid darken(grey, 20%);
-          }
-        }
-      }
-
-      .name {
-        color: white;
-        padding-right: 10px;
-      }
-
-      .badge {
-        &:last-child {
-          margin-left: 5px;
-        }
-      }
-    }
-  }
 }
 
 .main {
+  padding-left: 1rem;
+  padding-right: 2rem;
+
+  .query {
+    position: relative;
+
+    .url {
+      float: left;
+      margin: 0 !important;
+    }
+
+    .url-controls {
+      position: absolute;
+      right: 0;
+      border-radius: 0;
+
+      a:focus {
+        box-shadow: none;
+      }
+
+      a:first-child {
+        border-radius: 0;
+      }
+    }
+  }
+
   .request {
-    margin: 1rem;
+    margin-top: 1rem;
 
     &.raw {
       .card-body {
@@ -325,6 +308,20 @@ $warning: lighten(yellow, 20%);
     .raw-response {
       text-align: left;
     }
+  }
+}
+
+.results {
+  .type-integer {
+    color: #90CAF9;
+  }
+
+  .type-string {
+    color: $success;
+  }
+
+  .type-boolean {
+    color: #E040FB;
   }
 }
 
