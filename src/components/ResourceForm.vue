@@ -143,13 +143,17 @@ export default Vue.extend({
       this.query.sorts.push({ name: null, dir: 'asc', delete: false })
     },
     removeSort(sort: any) {
+      console.log('remove')
       let index = this.query.sorts.indexOf(sort)
       if (this.query.sorts.length < 1) {
+      console.log('a')
         this.query.sorts.splice(index, 1)
         if (this.query.sorts.length < 1) {
+      console.log('b')
           this.addSort()
         }
       } else {
+      console.log('c')
         this.query.sorts.splice(index, 1)
       }
     },

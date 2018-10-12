@@ -128,6 +128,18 @@ body {
   letter-spacing: 1px;
 }
 
+@mixin table-cell {
+  word-wrap: break-word;
+  display: table-cell;
+}
+
+@mixin table-row {
+  clear: both;
+  display: table-row;
+  // @extend .clearfix;
+  @include transition(all 200ms linear);
+}
+
 .table {
   $table: darken(grey, 30%);
   $border-radius: 5px;
@@ -138,8 +150,10 @@ body {
   background-color: $table;
   border-radius: $border-radius;
   box-shadow: inset 0px -1px 6px -1px black;
-  position: relative;
   margin-bottom: 1rem;
+  display: table;
+  table-layout: fixed;
+  position: relative;
 
   thead, .thead {
     @extend .clearfix;
@@ -154,14 +168,19 @@ body {
     color: rgba(255, 255, 255, 0.8);
     text-shadow: 1px 1px 2px darken($table, 20%);
 
-    tr {
+    .tr {
+      @include table-row;
       border-top: 1px solid rgba(255,255,255,0.1);
       border-bottom: 1px solid rgba(0,0,0,0.3);
+
+      .th {
+        @include table-cell;
+      }
     }
   }
 
   th, .th, thead th, .thead .th {
-    padding-to: 1rem;
+    padding-top: 1rem;
     padding-bottom: 1rem;
     border-bottom: none;
     border-top: none;
@@ -172,18 +191,50 @@ body {
   }
 
   tbody, .tbody {
+    display: table;
+    table-layout: fixed;
+    width: 100%;
+
     tr, .tr {
+      @include table-row;
+
+      &:first-child {
+        box-shadow: inset 0px 0px 6px -1px black
+      }
+
+      .th {
+        border-bottom: 1px solid black;
+      }
+
+      .td {
+        padding: 10px 12px;
+      }
+
       &:nth-child(odd) {
-        border-top: 1px solid rgba(255,255,255,0.1);
-        border-bottom: 1px solid rgba(0,0,0,0.3);
+        .td {
+          border-top: 1px solid rgba(255,255,255,0.1);
+          border-bottom: 1px solid rgba(0,0,0,0.3);
+        }
       }
 
       &:hover {
         background-color: darken($table, 5%);
       }
 
-      td {
+      td, .td, .th {
+        @include table-cell;
         border-top: none;
+      }
+
+      .th {
+        font-size: 120%;
+        padding-top: 1.25rem;
+        padding-bottom: 1.25rem;
+        line-height: 1rem;
+        letter-spacing: 2px;
+        font-weight: 300;
+        color: rgba(255, 255, 255, 0.8);
+        text-shadow: 1px 1px 2px darken($table, 20%);
       }
     }
   }

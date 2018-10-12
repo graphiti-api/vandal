@@ -65,16 +65,26 @@
                 </div>
 
                 <div class="loading-area" v-if="currentTab.name == 'results'" :class="{ 'loading-area-active': isLoading }">
-                  <table class="results table table-hover table-borderless">
-                    <thead>
-                      <th v-for="header in query.headers" :key="header">
-                        {{ header }}
-                      </th>
-                    </thead>
+                  <div class="results table table-hover table-borderless">
+                    <!-- <div class="thead">
+                      <div class="tr">
+                        <div class="th" v-for="header in query.headers" :key="header">
+                          {{ header }}
+                        </div>
+                      </div>
+                    </div> -->
 
-                    <tbody>
-                      <tr v-for="row in query.rows" :key="row.id.value">
-                        <td v-for="(config, key) in row" :key="key" :class="{ ['type-'+config.type]: true }">
+                    <div class="tbody">
+                      <div class="tr">
+                        <div class="th" v-for="header in query.headers" :key="header">
+                         {{ header }}
+                        </div>
+                      </div>
+
+                      <div class="tr" v-for="row in query.rows" :key="row.id.value">
+                        <!-- <div class="view-relationships">View Relationships</div> -->
+
+                        <div class="td" v-for="(config, key) in row" :key="key" :class="{ ['type-'+config.type]: true }">
                           <span v-if="config.type == 'datetime'">
                             {{ config.value | dateTimeType }}
                           </span>
@@ -84,10 +94,10 @@
                           <span v-else>
                             {{ config.value }}
                           </span>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -331,6 +341,11 @@ $darkCard: #5c666f;
       font-size: 110%;
     }
 
+    &:focus, &:active {
+      box-shadow: none;
+      border: none;
+    }
+
     &:active {
       transform: scale(1.1);
       top: 0;
@@ -504,6 +519,18 @@ $darkCard: #5c666f;
 }
 
 .results {
+  tr {
+    .view-relationships {
+      // display: none;
+    }
+
+    &:hover {
+      .view-relationships {
+        display: block;
+      }
+    }
+  }
+
   .type-integer {
     color: #90CAF9;
   }
@@ -518,7 +545,6 @@ $darkCard: #5c666f;
     font-weight: bold;
   }
 }
-
 
 pre {
   text-align: left;
