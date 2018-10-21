@@ -1,42 +1,36 @@
 <template>
-  <div class="graphici" :class="{ creating: creating, 'modal-open': modalIsOpen }">
+  <div class="graphici" :class="{ creating, modalIsOpen }">
     <div class="overlay" />
-    <div v-if="schema" class="top-level-contents" :class="{ resetting: isResetting }">
+
+    <div v-if="schema" class="top-level-contents" :class="{ resetting }">
       <div class="row">
         <div class="col-3 left-rail">
           <div class="card">
-            <div class="endpoints" :class="{ 'has-selection': endpoint }">
-              <input v-model="endpointSearch" type="search" class="form-control search" placeholder="Search" />
+            <endpoint-list :endpoints="schema.endpoints" @toggle="toggleEndpoint">
+              <div class="submission clearfix">
+                <a class="reset" @click="reset(query.endpoint)">Reset</a>
+                <button
+                  @click="fetch()"
+                  type="submit"
+                  class="col-6 float-right btn btn-primary"
+                >
+                  Submit &raquo;
+                </button>
+              </div>
 
-              <a v-for="e in endpoints" :key="e" class="endpoint" :class="{ selected: endpoint === e }">
-                <span v-if="endpoint == e">
-                  <div class="path" @click="deselectEndpoint(e)">&laquo; {{ e }}</div>
-                </span>
-                <span v-else>
-                  <div class="path" @click="selectEndpoint(e)">{{ e }}</div>
-                </span>
-
-                <span v-if="endpoint === e">
-                  <div class="submission clearfix">
-                    <a class="reset" @click="reset()">Reset</a>
-                    <button @click="fetch()" type="submit" class="col-6 float-right btn btn-primary">Submit &raquo;</button>
-                  </div>
-
-                  <resource-form
-                    :query="query"
-                    @submit="fetch"
-                    :schema="schema"
-                    :depth="0"
-                    :isShowAction="isShowAction"
-                  />
-                </span>
-              </a>
-            </div>
+              <resource-form
+                :query="query"
+                @submit="fetch"
+                :schema="schema"
+                :depth="0"
+                :isShowAction="isShowAction"
+              />
+            </endpoint-list>
           </div>
         </div>
 
         <div class="col-9 main">
-          <form class="query clearfix" v-if="endpoint">
+          <form class="query clearfix" v-if="query && query.endpoint">
             <input id="copy-url" type="hidden" :value="schema.json.base_url + query.url" />
             <input v-model="query.url" type="text" class="form-control url" placeholder="URL" :class="{ firing: isFiring }" />
 
@@ -118,6 +112,7 @@ import { Schema } from '@/schema'
 import { Query } from '@/query'
 import ResourceForm from '@/components/ResourceForm.vue'
 import DataTable from '@/components/DataTable.vue'
+import EndpointList from '@/components/EndpointList.vue'
 import EventBus from '@/event-bus.ts'
 
 const tabs = [
@@ -129,12 +124,12 @@ const tabs = [
 export default Vue.extend({
   name: 'graphici',
   components: {
-    ResourceForm,
-    DataTable
+    EndpointList,
+    DataTable,
+    ResourceForm
   },
   data() {
     return {
-      endpoint: null as any,
       schema: null as any,
       query: null as null | Query,
       currentTab: tabs[0],
@@ -142,11 +137,10 @@ export default Vue.extend({
       isLoading: false,
       path: null as any,
       resource: null as any,
-      endpointSearch: null as string | null,
       modalIsOpen: false,
       modalContent: null as string | null,
       isFiring: false as boolean,
-      isResetting: false as boolean
+      resetting: false as boolean
     }
   },
   created() {
@@ -156,15 +150,6 @@ export default Vue.extend({
     EventBus.$on('modalToggle', this.onModalToggle)
   },
   computed: {
-    endpoints() : any[] {
-      if (this.endpointSearch) {
-        return this.schema.endpoints.filter((e: string) => {
-          return e.includes(this.endpointSearch)
-        })
-      } else {
-        return this.schema.endpoints;
-      }
-    },
     isShowAction() : any {
       if (this.query) {
         return this.query.endpoint.includes('#show')
@@ -176,25 +161,23 @@ export default Vue.extend({
       this.modalContent = content
       this.modalIsOpen = !this.modalIsOpen
     },
-    selectEndpoint(endpoint: string) {
-      this.endpoint = endpoint
-      this.resource = this.schema.resourceFor(this.endpoint)
-      this.endpointSearch = null
-      this.reset(false)
-    },
-    deselectEndpoint(endpoint: string) {
-      this.endpoint = null
-      this.resource = null
-      this.query = null
+    toggleEndpoint(endpoint: string) {
+      if (endpoint) {
+        this.resource = this.schema.resourceFor(endpoint)
+        this.reset(endpoint, false)
+      } else {
+        this.resource = null
+        this.query = null
+      }
     },
     async fetchData() {
       let schemaJson = await (await fetch('/schema.json')).json()
       this.schema = new Schema(schemaJson)
     },
-    reset(animate = true) {
-      if (animate) this.isResetting = true
-      this.query = new Query(this.schema, this.resource, this.endpoint)
-      let doReset = () => { this.isResetting = false }
+    reset(endpoint: string, animate: boolean = true) {
+      if (animate) this.resetting = true
+      this.query = new Query(this.schema, this.resource, endpoint)
+      let doReset = () => { this.resetting = false }
       if (animate) setTimeout(doReset, 100)
     },
     async fetch() {
@@ -946,7 +929,7 @@ pre {
   }
 }
 
-.modal-open {
+.modalIsOpen {
   .overlay {
     position:fixed;
     top:0;

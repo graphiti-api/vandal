@@ -18,7 +18,7 @@ class ResponseData {
     if (!Array.isArray(rows)) {
       rows = [rows]
     }
-    rows.forEach((r: any) => {
+    this.rows = rows.map((r: any) => {
       return this.buildRow(this.resource, r)
     })
 
