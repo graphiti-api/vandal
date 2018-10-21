@@ -30,22 +30,7 @@
         </div>
 
         <div class="col-9 main">
-          <form class="query clearfix" v-if="query && query.endpoint">
-            <input id="copy-url" type="hidden" :value="schema.json.base_url + query.url" />
-            <input v-model="query.url" type="text" class="form-control url" placeholder="URL" :class="{ firing: isFiring }" />
-
-            <div class="btn-group url-controls">
-              <a @click="copyUrl()" title="Copy" class="btn btn-secondary">
-                <i class="fas fa-copy"></i>
-              </a>
-              <a :href="query.url" target="_blank" class="btn btn-secondary" title="Open in new tab">
-                <i class="fas fa-external-link-alt"></i>
-              </a>
-              <a @click="copyAsCurl()" class="btn btn-secondary" title="Copy as Curl">
-                <i class="fas fa-copyright"></i>
-              </a>
-            </div>
-          </form>
+          <url-bar :schema="schema" :query="query" :firing="firing" />
 
           <div :class="'request card '+ currentTab.name+'' " >
             <transition name="request-card">
@@ -53,10 +38,22 @@
                 <div class="card-header">
                   <ul class="nav nav-tabs card-header-tabs">
                     <li class="nav-item">
-                      <a @click="tab(0)" class="nav-link" :class="{ active: currentTab.name == 'results' }">Results</a>
+                      <a
+                        @click="tab(0)"
+                        class="nav-link"
+                        :class="{ active: currentTab.name == 'results' }"
+                      >
+                        Results
+                      </a>
                     </li>
                     <li class="nav-item">
-                      <a @click="tab(1)" class="nav-link" :class="{ active: currentTab.name == 'raw' }">Raw</a>
+                      <a
+                        @click="tab(1)"
+                        class="nav-link"
+                        :class="{ active: currentTab.name == 'raw' }"
+                      >
+                        Raw
+                      </a>
                     </li>
                   </ul>
                 </div>
@@ -68,7 +65,11 @@
                     </pre>
                   </div>
 
-                  <div class="loading-area" v-if="currentTab.name == 'results'" :class="{ 'loading-area-active': isLoading }">
+                  <div
+                    class="loading-area"
+                    v-if="currentTab.name == 'results'"
+                    :class="{ 'loading-area-active': isLoading }"
+                  >
                     <data-table :depth="0" :object="query.data" :isShowAction="isShowAction" />
                   </div>
                 </div>
@@ -90,7 +91,11 @@
         <div class="modal-dialog" role="document">
           <div class="modal-content">
             <div class="modal-header">
-              <button @click="onModalToggle()" type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <button
+                @click="onModalToggle()"
+                type="button"
+                class="close"
+              >
                 <span aria-hidden="true">&times;</span>
               </button>
             </div>
@@ -113,6 +118,7 @@ import { Query } from '@/query'
 import ResourceForm from '@/components/ResourceForm.vue'
 import DataTable from '@/components/DataTable.vue'
 import EndpointList from '@/components/EndpointList.vue'
+import UrlBar from '@/components/UrlBar.vue'
 import EventBus from '@/event-bus.ts'
 
 const tabs = [
@@ -126,7 +132,8 @@ export default Vue.extend({
   components: {
     EndpointList,
     DataTable,
-    ResourceForm
+    ResourceForm,
+    UrlBar
   },
   data() {
     return {
@@ -139,21 +146,19 @@ export default Vue.extend({
       resource: null as any,
       modalIsOpen: false,
       modalContent: null as string | null,
-      isFiring: false as boolean,
+      firing: false as boolean,
       resetting: false as boolean
     }
   },
   created() {
-    this.fetchData()
+    this.fetchSchema()
     let doneCreating = () => { this.creating = false }
     setTimeout(doneCreating, 1000)
     EventBus.$on('modalToggle', this.onModalToggle)
   },
   computed: {
     isShowAction() : any {
-      if (this.query) {
-        return this.query.endpoint.includes('#show')
-      }
+      if (this.query) return this.query.endpoint.includes('#show')
     }
   },
   methods: {
@@ -170,7 +175,7 @@ export default Vue.extend({
         this.query = null
       }
     },
-    async fetchData() {
+    async fetchSchema() {
       let schemaJson = await (await fetch('/schema.json')).json()
       this.schema = new Schema(schemaJson)
     },
@@ -182,9 +187,9 @@ export default Vue.extend({
     },
     async fetch() {
       if (this.validate()) {
-        this.isFiring = true
+        this.firing = true
         let unfire = () => {
-          this.isFiring = false
+          this.firing = false
         }
         setTimeout(unfire, 100)
         this.isLoading = true
@@ -204,7 +209,7 @@ export default Vue.extend({
       //   }
       // })
 
-      if (this.endpoint.includes('#show')) {
+      if (this.isShowAction) {
         let filter = this.query.filters.filter((f) => { return f.name === 'id' })[0]
         if (!filter.value) {
           this.tempSet(filter, 'error', true, 1000)
@@ -219,12 +224,6 @@ export default Vue.extend({
     },
     tab(index: number) {
       this.currentTab = tabs[index]
-    },
-    copyUrl() {
-      navigator.clipboard.writeText(this.query.urlWithDomain)
-    },
-    copyAsCurl() {
-      navigator.clipboard.writeText(this.query.generateCurl())
     },
     stall(stallTime = 3000) {
       return new Promise(resolve => setTimeout(resolve, stallTime));
@@ -313,20 +312,21 @@ $darkCard: #5c666f;
 }
 
 @keyframes move-down-query {
-    0% {
-        transform: translateY(-200px);
+  0% {
+    transform: translateY(-200px);
 
-        .url-controls {
-          right: 0;
-        }
+    .url-controls {
+      right: 0;
     }
-    100% {
-        transform: translateY(0px);
+  }
 
-        .url-controls {
-          right: 2rem;
-        }
+  100% {
+    transform: translateY(0px);
+
+    .url-controls {
+      right: 2rem;
     }
+  }
 }
 
 @keyframes move-up-request {
@@ -482,180 +482,11 @@ $darkCard: #5c666f;
     left: 25px;
     width: calc(100% - 25px);
   }
-
-  .selected-endpoint {
-    margin-bottom: 2rem;
-  }
-
-  .endpoints {
-    .search {
-      transition: all 200ms;
-      margin-bottom: 1rem;
-    }
-
-    &.has-selection {
-      .search {
-        max-height: 0;
-        opacity: 0;
-        padding: 0;
-        margin: 0;
-      }
-
-      .endpoint {
-        &.selected {
-          max-height: 2000px;
-
-          .path {
-            color: lighten(orange, 20%);
-            font-size: 120%;
-            font-weight: bold;
-            padding-bottom: 1rem;
-          }
-        }
-
-        &:not(.selected) {
-          // animation: slide-up 0.5s linear forwards;
-          opacity: 0;
-          max-height: 0;
-          margin: 0 !important;
-          margin-bottom: 0 !important;
-          padding: 0 !important;
-          // overflow: hidden;
-          border: none;
-        }
-      }
-    }
-
-    &:not(.has-selection) {
-      .endpoint {
-        &:hover {
-          transition: all 0.1s;
-          font-size: 110%;
-          font-weight: bold;
-          color: lighten(orange, 40%);
-        }
-      }
-    }
-
-    .endpoint {
-      transition: all 0.3s;
-      max-height: 200px;
-      display: block;
-      padding: 0.5rem 0 0.5rem 0;
-      overflow: hidden;
-    }
-
-    // todo some type of endpoint begin/end
-    .endpoint {
-      display: block;
-      color: #f0f0f0;
-      overflow: hidden;
-      border-top: 1px dotted black;
-
-      &:hover {
-        color: #f0f0f0;
-      }
-
-      &.selected {
-        border-top: none;
-      }
-
-      &:first-child {
-        border-top: none;
-      }
-    }
-  }
 }
 
 .main {
   padding-left: 1rem;
   padding-right: 2rem;
-
-  .url {
-    transition: all 50ms;
-    box-shadow: 0px 0px 0px 0px white;
-  }
-
-  .url.firing {
-    border: none;
-    color: white;
-    box-shadow: 0px 0px 20px 5px white;
-
-    & + .url-controls {
-      display: none;
-    }
-  }
-
-  .query {
-    position: relative;
-
-    .url {
-      float: left;
-      margin: 0 !important;
-    }
-
-    .url-controls {
-      position: absolute;
-      right: 0;
-      border-radius: 0;
-
-      .btn {
-        background-color: darken(#6c757d, 20%);
-        border-top: 1px solid black;
-        border-bottom: 1px solid black;
-        border-left: none;
-        border-right: none;
-        padding-right: 1.5rem;
-        padding-left: 1.5rem;
-        padding-top: 8px;
-        margin-top: -1px;
-        text-align: center;
-        color: lighten(orange, 20%);
-        width: 5rem;
-        height: 2.5rem;
-        transition: all 200ms;
-
-        i {
-          transition: all 200ms;
-          position: absolute;
-          left: 40%;
-          top: 27%;
-        }
-
-        &:hover {
-          font-size: 110%;
-          color: white;
-        }
-
-        &:active {
-          background-color: black;
-
-          i {
-            top: 10%;
-            font-size: 140%;
-          }
-        }
-
-        &:first-child {
-          z-index: 2;
-          border-right: 1px dashed black !important;
-        }
-
-        &:last-child {
-          z-index: 2;
-          border-left: 1px dashed black !important;
-        }
-      }
-
-      a:focus {
-        box-shadow: none;
-      }
-
-      a:first-child {
-        border-radius: 0;
-      }
-    }
-  }
 
   .request {
     margin-top: 1rem;
