@@ -8,6 +8,22 @@ Vue.use(VueHighlightJS)
 
 Vue.config.productionTip = false
 
+Vue.mixin({
+  methods: {
+    tempSet(obj, prop, val, duration, after = null) {
+      let valueAfter = obj[prop]
+      if (after !== null) {
+        valueAfter = after
+      }
+      obj[prop] = val
+      let reset = () => {
+        obj[prop] = valueAfter
+      }
+      setTimeout(reset, duration)
+    }
+  }
+})
+
 Vue.filter('dateTimeType', (value: any) => {
   if (value) {
     return moment(String(value)).format('M/D/YYYY h:mm a')

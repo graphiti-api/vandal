@@ -8,58 +8,68 @@
           <label>Filters</label>
           <a @click="addFilter" class="add">Add +</a>
 
-          <div v-for="(filter, index) in query.filters" :key="index" class="form-group">
-            <div class="clearfix form-group">
-              <select v-model="filter.name" class="filter-name col-8 float-left form-control">
-                <option disabled value="null">Choose</option>
-                <option v-for="(config, name) in query.resource.filters" :key="name">
-                  {{ name }}
-                </option>
-              </select>
-              <select v-if="filter.name" v-model="filter.operator" class="col-3 float-left form-control">
-                <option v-for="operator in query.resource.filters[filter.name].operators" :key="operator">
-                  {{ operator }}
-                </option>
-              </select>
-              <select v-else class="col-3 float-left form-control">
-                <option selected disabled>eq</option>
-              </select>
-            </div>
+          <transition-group name="form-input-section">
+            <div v-for="(filter, index) in query.filters" :key="index" class="form-group filter" :class="{ error: filter.error }">
+              <div class="clearfix form-group">
+                <select v-model="filter.name" class="filter-name col-8 float-left form-control">
+                  <option disabled value="null">Choose</option>
+                  <option v-for="(config, name) in query.resource.filters" :key="name">
+                    {{ name }}
+                  </option>
+                </select>
+                <select v-if="filter.name" v-model="filter.operator" class="col-3 float-left form-control">
+                  <option v-for="operator in query.resource.filters[filter.name].operators" :key="operator">
+                    {{ operator }}
+                  </option>
+                </select>
+                <select v-else class="col-3 float-left form-control">
+                  <option selected disabled>eq</option>
+                </select>
+              </div>
 
-            <div class='clearfix'>
-              <input v-model="filter.value" type="text" class="float-left col-10 form-control" placeholder="Enter Filter Value Here" />
-              <a @click="removeFilter(filter)" class='remove col-1'>x</a>
+              <div class='clearfix'>
+                <input v-model="filter.value" type="text" class="filter-value float-left col-10 form-control" placeholder="Enter Filter Value Here" />
+                <a @click="removeFilter(filter)" class='remove col-1'>x</a>
+              </div>
+
+              <div class="required-filter text-muted" v-if="filter.required">
+                Required
+              </div>
             </div>
-          </div>
+          </transition-group>
         </div>
 
         <div class="section sorts form-group">
           <label>Sorts</label>
           <a @click="addSort" class="add">Add +</a>
 
-          <div v-for="(sort, index) in query.sorts" :key="index" class='form-group clearfix'>
-            <select v-model="sort.name" class="filter-name col-7 float-left form-control">
-              <option disabled value="null">Choose</option>
-              <option v-for="(config, name) in query.resource.sorts" :key="name">
-                {{ name }}
-              </option>
-            </select>
-            <select v-model="sort.dir" class="col-3 float-left form-control">
-              <option selected>asc</option>
-              <option>desc</option>
-            </select>
-            <a @click="removeSort(sort)" class='remove col-1'>x</a>
-          </div>
+          <transition-group name="form-input-section">
+            <div v-for="(sort, index) in query.sorts" :key="index" class='form-group clearfix'>
+              <select v-model="sort.name" class="filter-name col-7 float-left form-control">
+                <option disabled value="null">Choose</option>
+                <option v-for="(config, name) in query.resource.sorts" :key="name">
+                  {{ name }}
+                </option>
+              </select>
+              <select v-model="sort.dir" class="col-3 float-left form-control">
+                <option selected>asc</option>
+                <option>desc</option>
+              </select>
+              <a @click="removeSort(sort)" class='remove col-1'>x</a>
+            </div>
+          </transition-group>
         </div>
 
-        <!-- TODO: You CAN paginate if only one parent. Let's enable this for #show -->
-        <div v-if="!isRelationship" class="section form-pagination form-group">
+        <div class="section form-pagination form-group">
           <label>Pagination</label>
 
-          <div class="form-group clearfix">
+          <div v-if="isShowAction || !isRelationship" class="form-group clearfix">
             <input v-model="query.page.number" type="number" class="col-5 float-left form-control" placeholder="Number" />
             <input v-model="query.page.size" type="number" class="col-5 float-left size form-control" placeholder="Size" />
             <a @click="removePagination()" class='remove col-1'>x</a>
+          </div>
+          <div v-else class="form-group clearfix text-muted">
+            Only #show supports nested pagination
           </div>
         </div>
       </div>
@@ -88,6 +98,7 @@
             :is-relationship="true"
             @editRelationship="onSubrelationshipEdit"
             @doneEditRelationship="onSubrelationshipDoneEdit"
+            :isShowAction="isShowAction"
             :depth="depth+1"
           />
         </div>
@@ -114,7 +125,7 @@ import { Query } from '@/query'
 
 export default Vue.extend({
   name: 'resource-form',
-  props: ['query', 'isRelationship', 'schema', 'depth'],
+  props: ['query', 'isShowAction', 'isRelationship', 'schema', 'depth'],
   data() {
     return {
       subRelationshipNames: [] as string[],
@@ -124,37 +135,30 @@ export default Vue.extend({
   created() {
   },
   computed: {
-    // isActiveSubrelationship() : boolean {
-    //   return this.subRelationshipNames.length == 0
-    // }
   },
   methods: {
     addFilter() {
-      this.query.filters.push({ name: null, operator: 'eq' })
+      this.query.filters.push({ name: null, operator: 'eq', error: null })
     },
     removeFilter(filter: any) {
-      let index = this.query.filters.indexOf(filter)
-      this.query.filters.splice(index, 1)
-      if (this.query.filters.length < 1) {
-        this.addFilter()
+      if (filter.required) {
+        filter.value = null
+      } else {
+        let index = this.query.filters.indexOf(filter)
+        this.query.filters.splice(index, 1)
+        if (this.query.filters.length < 1) {
+          this.addFilter()
+        }
       }
     },
     addSort() {
       this.query.sorts.push({ name: null, dir: 'asc', delete: false })
     },
     removeSort(sort: any) {
-      console.log('remove')
       let index = this.query.sorts.indexOf(sort)
-      if (this.query.sorts.length < 1) {
-      console.log('a')
-        this.query.sorts.splice(index, 1)
-        if (this.query.sorts.length < 1) {
-      console.log('b')
-          this.addSort()
-        }
-      } else {
-      console.log('c')
-        this.query.sorts.splice(index, 1)
+      this.query.sorts.splice(index, 1)
+      if (this.query.sorts.length === 0) {
+        this.addSort()
       }
     },
     removePagination() {
@@ -166,7 +170,7 @@ export default Vue.extend({
       if (this.query.relationshipPath) {
         relationshipPath = `${this.query.relationshipPath}.${name}`
       }
-      let subQuery = new Query(subResource, null, relationshipPath)
+      let subQuery = new Query(this.schema, subResource, null, relationshipPath)
       this.$set(this.query.relationships, name, subQuery)
     },
     removeRelationship(name: string) {
@@ -216,7 +220,18 @@ $warning: lighten(yellow, 20%);
 
 .form-group {
   position: relative;
-  animation: slide-down 0.4s ease forwards;
+  display: block;
+  .form-input-section-enter-active {
+    animation: slide-down-form-group 0.2s ease forwards;
+  }
+
+  .form-input-section-leave-active {
+    animation: slide-up 0.1s ease forwards;
+  }
+}
+
+.text-muted {
+  color: lighten(#6c757d, 20%) !important;
 }
 
 .query-inputs {
@@ -242,6 +257,10 @@ $warning: lighten(yellow, 20%);
       right: 0.7rem;
     }
   }
+}
+
+.required-filter {
+  margin-top: 0.5rem;
 }
 
 .hidden {

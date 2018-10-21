@@ -1,10 +1,10 @@
 <template>
-  <div class="graphici" :class="{ creating: creating }">
-    <div v-if="schema">
+  <div class="graphici" :class="{ creating: creating, 'modal-open': modalIsOpen }">
+    <div class="overlay" />
+    <div v-if="schema" class="top-level-contents" :class="{ resetting: isResetting }">
       <div class="row">
         <div class="col-3 left-rail">
           <div class="card">
-
             <div class="endpoints" :class="{ 'has-selection': endpoint }">
               <input v-model="endpointSearch" type="search" class="form-control search" placeholder="Search" />
 
@@ -22,7 +22,13 @@
                     <button @click="fetch()" type="submit" class="col-6 float-right btn btn-primary">Submit &raquo;</button>
                   </div>
 
-                  <resource-form :query="query" @submit="fetch" :schema="schema" :depth="0"/>
+                  <resource-form
+                    :query="query"
+                    @submit="fetch"
+                    :schema="schema"
+                    :depth="0"
+                    :isShowAction="isShowAction"
+                  />
                 </span>
               </a>
             </div>
@@ -31,79 +37,52 @@
 
         <div class="col-9 main">
           <form class="query clearfix" v-if="endpoint">
-            <input v-model="query.url" type="text" class="form-control url" placeholder="URL" />
             <input id="copy-url" type="hidden" :value="schema.json.base_url + query.url" />
+            <input v-model="query.url" type="text" class="form-control url" placeholder="URL" :class="{ firing: isFiring }" />
 
             <div class="btn-group url-controls">
-              <a @click="copyUrl()" class="btn btn-secondary">Copy</a>
-              <a :href="query.url" target="_blank" class="btn btn-secondary">Tab</a>
-              <a class="btn btn-secondary">Curl</a>
+              <a @click="copyUrl()" title="Copy" class="btn btn-secondary">
+                <i class="fas fa-copy"></i>
+              </a>
+              <a :href="query.url" target="_blank" class="btn btn-secondary" title="Open in new tab">
+                <i class="fas fa-external-link-alt"></i>
+              </a>
+              <a @click="copyAsCurl()" class="btn btn-secondary" title="Copy as Curl">
+                <i class="fas fa-copyright"></i>
+              </a>
             </div>
           </form>
 
           <div :class="'request card '+ currentTab.name+'' " >
-            <div v-if="query && query.ready">
-              <div class="card-header">
-                <ul class="nav nav-tabs card-header-tabs">
-                  <li class="nav-item">
-                    <a @click="tab(0)" class="nav-link" :class="{ active: currentTab.name == 'results' }">Results</a>
-                  </li>
-                  <li class="nav-item">
-                    <a @click="tab(1)" class="nav-link" :class="{ active: currentTab.name == 'raw' }">Raw</a>
-                  </li>
-                  <li class="nav-item">
-                    <a @click="tab(2)" class="nav-link" :class="{ active: currentTab.name == 'debug' }">Debug</a>
-                  </li>
-                </ul>
-              </div>
-
-              <div class="card-body">
-                <div v-if="currentTab.name == 'raw'">
-                  <pre v-highlightjs v-if="query.json">
-                    <code class="json">{{ query.json }}</code>
-                  </pre>
+            <transition name="request-card">
+              <div key="1" class="is-ready" v-if="query && query.ready">
+                <div class="card-header">
+                  <ul class="nav nav-tabs card-header-tabs">
+                    <li class="nav-item">
+                      <a @click="tab(0)" class="nav-link" :class="{ active: currentTab.name == 'results' }">Results</a>
+                    </li>
+                    <li class="nav-item">
+                      <a @click="tab(1)" class="nav-link" :class="{ active: currentTab.name == 'raw' }">Raw</a>
+                    </li>
+                  </ul>
                 </div>
 
-                <div class="loading-area" v-if="currentTab.name == 'results'" :class="{ 'loading-area-active': isLoading }">
-                  <div class="results table table-hover table-borderless">
-                    <!-- <div class="thead">
-                      <div class="tr">
-                        <div class="th" v-for="header in query.headers" :key="header">
-                          {{ header }}
-                        </div>
-                      </div>
-                    </div> -->
+                <div class="card-body">
+                  <div v-if="currentTab.name == 'raw'">
+                    <pre v-highlightjs v-if="query.data.json">
+                      <code class="json">{{ query.data.json }}</code>
+                    </pre>
+                  </div>
 
-                    <div class="tbody">
-                      <div class="tr">
-                        <div class="th" v-for="header in query.headers" :key="header">
-                         {{ header }}
-                        </div>
-                      </div>
-
-                      <div class="tr" v-for="row in query.rows" :key="row.id.value">
-                        <!-- <div class="view-relationships">View Relationships</div> -->
-
-                        <div class="td" v-for="(config, key) in row" :key="key" :class="{ ['type-'+config.type]: true }">
-                          <span v-if="config.type == 'datetime'">
-                            {{ config.value | dateTimeType }}
-                          </span>
-                          <span v-else-if="config.type == 'date'">
-                            {{ config.value | dateType }}
-                          </span>
-                          <span v-else>
-                            {{ config.value }}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                  <div class="loading-area" v-if="currentTab.name == 'results'" :class="{ 'loading-area-active': isLoading }">
+                    <data-table :depth="0" :object="query.data" :isShowAction="isShowAction" />
                   </div>
                 </div>
               </div>
-            </div>
-            <div v-else class="no-request">
-              Use the left side to configure and fire a request.
-            </div>
+              <div class="is-not-ready" v-else>
+                Use the left side to configure and fire a request.
+              </div>
+            </transition>
           </div>
         </div>
       </div>
@@ -111,6 +90,25 @@
     <div v-else>
       Loading...
     </div>
+
+    <transition name="modal">
+      <div v-if="modalIsOpen" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button @click="onModalToggle()" type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <pre v-highlightjs>
+                <code class="json">{{ modalContent }}</code>
+              </pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -119,6 +117,8 @@ import Vue from 'vue';
 import { Schema } from '@/schema'
 import { Query } from '@/query'
 import ResourceForm from '@/components/ResourceForm.vue'
+import DataTable from '@/components/DataTable.vue'
+import EventBus from '@/event-bus.ts'
 
 const tabs = [
   { name: 'results' },
@@ -129,7 +129,8 @@ const tabs = [
 export default Vue.extend({
   name: 'graphici',
   components: {
-    ResourceForm
+    ResourceForm,
+    DataTable
   },
   data() {
     return {
@@ -141,13 +142,18 @@ export default Vue.extend({
       isLoading: false,
       path: null as any,
       resource: null as any,
-      endpointSearch: null as string | null
+      endpointSearch: null as string | null,
+      modalIsOpen: false,
+      modalContent: null as string | null,
+      isFiring: false as boolean,
+      isResetting: false as boolean
     }
   },
   created() {
     this.fetchData()
     let doneCreating = () => { this.creating = false }
-    // setTimeout(doneCreating, 1000)
+    setTimeout(doneCreating, 1000)
+    EventBus.$on('modalToggle', this.onModalToggle)
   },
   computed: {
     endpoints() : any[] {
@@ -158,14 +164,23 @@ export default Vue.extend({
       } else {
         return this.schema.endpoints;
       }
+    },
+    isShowAction() : any {
+      if (this.query) {
+        return this.query.endpoint.includes('#show')
+      }
     }
   },
   methods: {
+    onModalToggle(content: string) {
+      this.modalContent = content
+      this.modalIsOpen = !this.modalIsOpen
+    },
     selectEndpoint(endpoint: string) {
       this.endpoint = endpoint
       this.resource = this.schema.resourceFor(this.endpoint)
       this.endpointSearch = null
-      this.reset()
+      this.reset(false)
     },
     deselectEndpoint(endpoint: string) {
       this.endpoint = null
@@ -176,23 +191,57 @@ export default Vue.extend({
       let schemaJson = await (await fetch('/schema.json')).json()
       this.schema = new Schema(schemaJson)
     },
-    reset() {
-      this.query = new Query(this.resource, this.endpoint)
+    reset(animate = true) {
+      if (animate) this.isResetting = true
+      this.query = new Query(this.schema, this.resource, this.endpoint)
+      let doReset = () => { this.isResetting = false }
+      if (animate) setTimeout(doReset, 100)
     },
     async fetch() {
-      this.isLoading = true
-      let then = Date.now()
-      await this.query.fire()
-      let now = Date.now()
-      // Force min of 100ms
-      await this.stall(100-(now - then))
-      this.isLoading = false
+      if (this.validate()) {
+        this.isFiring = true
+        let unfire = () => {
+          this.isFiring = false
+        }
+        setTimeout(unfire, 100)
+        this.isLoading = true
+        let then = Date.now()
+        await this.query.fire()
+        let now = Date.now()
+        // Force min of 100ms
+        await this.stall(100-(now - then))
+        this.isLoading = false
+      }
+    },
+    validate() {
+      // Object.keys(this.query.resource.filters).forEach((k) => {
+      //   let filter = this.query.resource.filters[k]
+      //   if (filter.required && !this.query.hasFilterValue(k)) {
+      //     filter.error = true
+      //   }
+      // })
+
+      if (this.endpoint.includes('#show')) {
+        let filter = this.query.filters.filter((f) => { return f.name === 'id' })[0]
+        if (!filter.value) {
+          this.tempSet(filter, 'error', true, 1000)
+          return false
+        } else {
+          filter.error = false
+          return true
+        }
+      } else {
+        return true
+      }
     },
     tab(index: number) {
       this.currentTab = tabs[index]
     },
     copyUrl() {
-      navigator.clipboard.writeText(`${this.schema.json.base_url}${this.query.url}`)
+      navigator.clipboard.writeText(this.query.urlWithDomain)
+    },
+    copyAsCurl() {
+      navigator.clipboard.writeText(this.query.generateCurl())
     },
     stall(stallTime = 3000) {
       return new Promise(resolve => setTimeout(resolve, stallTime));
@@ -210,7 +259,8 @@ $darkCard: #5c666f;
 @keyframes slide-up {
     0% {
       opacity: 1;
-      max-height: 500px;
+      max-height: 300px;
+      transform: translateY(0px);
     }
     100% {
       max-height: 0;
@@ -219,6 +269,8 @@ $darkCard: #5c666f;
       opacity: 0;
       overflow: hidden;
       border: none;
+      line-height: 0;
+      transform: translateY(-40px);
     }
 }
 
@@ -234,6 +286,23 @@ $darkCard: #5c666f;
     100% {
         opacity: 1;
         max-height: 1000px;
+    }
+}
+
+@keyframes slide-down-form-group {
+    0% {
+        opacity: 0;
+        max-height: 0;
+        transform: translateY(-40px);
+    }
+    99% {
+        opacity: 1;
+        max-height: 300px;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 1;
+        max-height: none;
     }
 }
 
@@ -286,11 +355,58 @@ $darkCard: #5c666f;
     }
 }
 
+@keyframes error {
+  from,
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+
+  10%,
+  50%,
+  90% {
+    transform: translate3d(-10px, 0, 0);
+  }
+
+  30%,
+  70% {
+    transform: translate3d(10px, 0, 0);
+  }
+}
+
 .graphici {
   margin-top: 3rem;
 }
 .nav-link {
   cursor: pointer;
+}
+
+.error {
+  animation: error 300ms !important;
+
+  .filter-value {
+    border: 1px solid red;
+  }
+}
+
+.top-level-contents {
+  transition: all 150ms;
+
+  &.resetting {
+    transform: translateY(-20px);
+    filter: blur(5px);
+  }
+}
+
+.request.card {
+  .is-ready {
+    transition: all 200ms;
+    max-height: 1400px;
+
+    &.request-card-leave-active {
+      max-height: 0;
+      opacity: 0;
+    }
+  }
 }
 
 .hide, .form-group.hide {
@@ -472,6 +588,21 @@ $darkCard: #5c666f;
   padding-left: 1rem;
   padding-right: 2rem;
 
+  .url {
+    transition: all 50ms;
+    box-shadow: 0px 0px 0px 0px white;
+  }
+
+  .url.firing {
+    border: none;
+    color: white;
+    box-shadow: 0px 0px 20px 5px white;
+
+    & + .url-controls {
+      display: none;
+    }
+  }
+
   .query {
     position: relative;
 
@@ -484,6 +615,54 @@ $darkCard: #5c666f;
       position: absolute;
       right: 0;
       border-radius: 0;
+
+      .btn {
+        background-color: darken(#6c757d, 20%);
+        border-top: 1px solid black;
+        border-bottom: 1px solid black;
+        border-left: none;
+        border-right: none;
+        padding-right: 1.5rem;
+        padding-left: 1.5rem;
+        padding-top: 8px;
+        margin-top: -1px;
+        text-align: center;
+        color: lighten(orange, 20%);
+        width: 5rem;
+        height: 2.5rem;
+        transition: all 200ms;
+
+        i {
+          transition: all 200ms;
+          position: absolute;
+          left: 40%;
+          top: 27%;
+        }
+
+        &:hover {
+          font-size: 110%;
+          color: white;
+        }
+
+        &:active {
+          background-color: black;
+
+          i {
+            top: 10%;
+            font-size: 140%;
+          }
+        }
+
+        &:first-child {
+          z-index: 2;
+          border-right: 1px dashed black !important;
+        }
+
+        &:last-child {
+          z-index: 2;
+          border-left: 1px dashed black !important;
+        }
+      }
 
       a:focus {
         box-shadow: none;
@@ -508,7 +687,7 @@ $darkCard: #5c666f;
       }
     }
 
-    .no-request {
+    .is-not-ready {
       padding: 5rem;
     }
 
@@ -519,16 +698,11 @@ $darkCard: #5c666f;
 }
 
 .results {
-  tr {
-    .view-relationships {
-      // display: none;
-    }
-
-    &:hover {
-      .view-relationships {
-        display: block;
-      }
-    }
+  .td:first-child, .th:first-child {
+    $w: 8rem;
+    width: $w;
+    min-width: $w;
+    max-width: $w;
   }
 
   .type-integer {
@@ -548,12 +722,12 @@ $darkCard: #5c666f;
 
 pre {
   text-align: left;
-  background-color: $darkCard;
+  background-color: transparent;
   border: none;
   border-radius: 0;
 
   code.hljs {
-    background-color: $darkCard;
+    background-color: transparent;
     color: lighten(#DAE4F2, 5%);
     line-height: 20px;
     -webkit-font-smoothing: antialiased;
@@ -582,6 +756,216 @@ pre {
         color: darken(#9ECBEE, 5%);
       }
     }
+  }
+}
+
+@keyframes table-select {
+  50% {
+    transform: scale(0.95);
+  }
+  80% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes relationship-table {
+  0% {
+    opacity: 0;
+    transform: translateY(-300px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0px);
+  }
+}
+
+.main .results.table {
+  $duration: 250ms;
+
+  td {
+    transition: all $duration;
+  }
+
+  .td-contents {
+    transition: all $duration;
+    overflow: hidden;
+  }
+}
+
+.main table.results:not(.has-selection) {
+  tr:nth-child(odd)  {
+    border-top: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(0,0,0,0.3);
+  }
+}
+
+.data-table .table-wrapper {
+  overflow-y: scroll;
+}
+
+// table animations
+.main table.results {
+  @for $i from 7 through 50 {
+    &.columns-#{$i} {
+      width: 100% + 20% * ($i - 6);
+    }
+  }
+
+  &.columns-6 {
+    width: 100%;
+  }
+
+  td .td-contents div {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  // &.short-ids {
+  //   td:first-child, th:first-child {
+  //     width: 6rem;
+  //   }
+  // }
+
+  td:first-child, th:first-child {
+    word-break: break-all;
+    text-align: left;
+    padding-right: 0;
+  }
+
+  &.relationship-table {
+    animation: relationship-table 300ms;
+  }
+
+  &.has-selection {
+    animation: table-select 250ms;
+
+    td {
+      border: none;
+    }
+
+    tr.data-row.selected {
+      border-top: 1px solid rgba(255,255,255,0.1) !important;
+      background-color: rgba(0, 0, 0, 0.075);
+
+      td:first-child {
+        color: orange;
+        font-weight: bold;
+        font-size: 120%;
+        border-top: 1px solid rgba(255,255,255,0.1) !important;
+      }
+    }
+
+    tr.data-row:not(.selected) {
+      td {
+        padding: 0;
+      }
+
+      .td-contents {
+        max-height: 0px;
+      }
+    }
+  }
+}
+
+.overlay {
+  transition: all 200ms;
+  background-color: transparent;
+  opacity: 1;
+}
+
+.top-level-contents {
+  transition: all 200ms;
+}
+
+.modal-dialog {
+  max-width: 60% !important;
+}
+
+.modal {
+  display: block;
+  font-size: 130%;
+
+  pre {
+    margin-bottom: 0;
+  }
+
+  code.hljs {
+    margin-top: -40px;
+    line-height: 1.7rem;
+  }
+
+  &.modal-leave-active {
+    animation: modal-close 200ms;
+  }
+
+  .modal-content {
+    background-color: darken($darkCard, 20%);
+    border: 2px solid black;
+    max-height: 100%;
+    overflow-y: scroll;
+  }
+
+  .modal-body {
+    padding-top: 0;
+    margin-bottom: 0;
+  }
+
+  .modal-header {
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+}
+
+@keyframes modal-open {
+  0% {
+    transform: translateY(-400px) scale(0.8);
+    opacity: 0;
+    max-height: 0;
+  }
+  100% {
+    transform: translateY(0px) scale(1);
+    opacity: 1;
+    max-height: none;
+  }
+}
+
+@keyframes modal-close {
+  0% {
+    transform: translateY(0px) scale(1);
+    opacity: 1;
+    max-height: none;
+  }
+  100% {
+    transform: translateY(-400px) scale(0.8);
+    opacity: 0;
+    max-height: 0;
+  }
+}
+
+.modal-open {
+  .overlay {
+    position:fixed;
+    top:0;
+    bottom:0;
+    left:0;
+    right:0;
+    background-color: black;
+    opacity:0.55;
+    z-index:1001
+  }
+
+  .top-level-contents {
+    filter: blur(1px);
+    opacity: 0.8;
+    transform: scale(0.95);
+  }
+
+  .modal {
+    animation: modal-open 200ms;
   }
 }
 </style>
