@@ -141,7 +141,6 @@ body {
 @mixin table-row {
   clear: both;
   display: table-row;
-  // @extend .clearfix;
 }
 
 .table {
@@ -162,7 +161,6 @@ body {
   thead, .thead {
     @extend .clearfix;
     border-top: 1px solid black;
-    // border-bottom: 1px solid black;
     border-radius: $border-radius $border-radius 0 0;
     box-shadow: inset 0px 3px 4px -1px black;
     transform: scale(1, 1.1);
@@ -174,8 +172,6 @@ body {
 
     .tr {
       @include table-row;
-      // border-top: 1px solid rgba(255,255,255,0.1);
-      // border-bottom: 1px solid rgba(0,0,0,0.3);
 
       .th {
         @include table-cell;
@@ -184,8 +180,6 @@ body {
   }
 
   th, .th, thead th, .thead .th {
-    // padding-top: 1rem;
-    // padding-bottom: 1rem;
     border-bottom: none;
     border-top: none;
 
@@ -202,13 +196,6 @@ body {
 
       td {
         padding: 10px 12px;
-      }
-
-      &:nth-child(odd) {
-        td {
-          // border-top: 1px solid rgba(255,255,255,0.1);
-          // border-bottom: 1px solid rgba(0,0,0,0.3);
-        }
       }
 
       td, .td, .th {

@@ -87,16 +87,10 @@ export default Vue.extend({
     toggleRow(row: any) {
       if (this.object.selectedRow) {
         this.object.selectedRow = null
-        // but not necessarily active false
       } else {
         this.active = true
         this.object.selectedRow = row
       }
-      // listen for this
-      // if not the selectedRow, then set flag for inactive class
-      // inactives fade up and away
-      // but when click AGAIN, slide back previous
-      // this.$emit('rowClick', this.object.selectedRow)
     },
     onSubRowClick(row: any) {
       if (row) {
@@ -116,6 +110,29 @@ $warning: lighten(yellow, 20%);
 $darkCard: #5c666f;
 $table: darken(grey, 30%);
 
+@keyframes relationship-table {
+  0% {
+    opacity: 0;
+    transform: translateY(-300px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0px);
+  }
+}
+
+@keyframes table-select {
+  50% {
+    transform: scale(0.95);
+  }
+  80% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 .relationship-label {
   text-align: left;
   color: $warning;
@@ -134,6 +151,10 @@ $table: darken(grey, 30%);
     }
   }
 
+  .table-wrapper {
+    overflow-y: scroll;
+  }
+
   &.inactive {
     > .contents {
       transform: translateY(-200px);
@@ -143,14 +164,114 @@ $table: darken(grey, 30%);
   }
 
   table.results {
-    th:first-child {
-      min-width: 2rem !important;
+    $duration: 250ms;
+
+    @for $i from 7 through 50 {
+      &.columns-#{$i} {
+        width: 100% + 20% * ($i - 6);
+      }
     }
 
-    td:first-child {
-      width: 1px;
-      white-space:nowrap;
-      transition: all 0ms;
+    &.columns-6 {
+      width: 100%;
+    }
+
+    &.relationship-table {
+      animation: relationship-table 300ms;
+    }
+
+    &:not(.has-selection) {
+      tbody tr:nth-child(odd)  {
+        border-top: 1px solid rgba(255,255,255,0.1);
+        border-bottom: 1px solid rgba(0,0,0,0.3);
+      }
+    }
+
+    &.has-selection {
+      animation: table-select 250ms;
+
+      td {
+        border: none;
+      }
+
+      tr.data-row.selected {
+        border-top: 1px solid rgba(255,255,255,0.1) !important;
+        background-color: rgba(0, 0, 0, 0.075);
+
+        td:first-child {
+          color: orange;
+          font-weight: bold;
+          font-size: 120%;
+          border-top: 1px solid rgba(255,255,255,0.1) !important;
+        }
+      }
+
+      tr.data-row:not(.selected) {
+        td {
+          padding: 0;
+        }
+
+        .td-contents {
+          max-height: 0px;
+        }
+      }
+    }
+
+    tbody {
+      padding-top: 1rem;
+    }
+
+    th {
+      padding-top: 0.75rem;
+      // if go to 0.5, first th has no border bottom
+      padding-bottom: 0.49rem;
+      vertical-align: middle;
+    }
+
+    td {
+      transition: all $duration;
+
+      &:first-child {
+        width: 1px;
+        white-space:nowrap;
+        transition: all 0ms;
+      }
+
+      .td-contents {
+        transition: all $duration;
+        overflow: hidden;
+
+        div {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+    }
+
+    .td:first-child, .th:first-child {
+      min-width: 2rem !important;
+      $w: 8rem;
+      width: $w;
+      min-width: $w;
+      max-width: $w;
+      word-break: break-all;
+      text-align: left;
+      padding-right: 0;
+    }
+
+    .type-integer {
+      color: #90CAF9;
+    }
+
+    .type-string {
+      color: $success;
+    }
+
+    .type-boolean {
+      color: lighten(#E040FB, 20%);
+      letter-spacing: 2px;
+      font-weight: bold;
     }
 
     tr {
@@ -185,7 +306,7 @@ $table: darken(grey, 30%);
       &.id-length-#{$i} {
         @if 0.7*$i < 2 {
           th:first-child {
-            width: 2rem !important;
+            width: 3rem !important;
           }
         }
 
