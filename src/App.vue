@@ -163,7 +163,6 @@ body {
     border-top: 1px solid black;
     border-radius: $border-radius $border-radius 0 0;
     box-shadow: inset 0px 3px 4px -1px black;
-    transform: scale(1, 1.1);
     line-height: 1rem;
     letter-spacing: 2px;
     font-weight: 300;

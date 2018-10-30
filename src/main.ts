@@ -26,7 +26,7 @@ Vue.mixin({
 
 Vue.filter('dateTimeType', (value: any) => {
   if (value) {
-    return moment(String(value)).format('M/D/YYYY h:mm a')
+    return moment(String(value)).format('M/D/YYYY h:mma')
   }
 })
 

@@ -34,7 +34,7 @@
 
           <div :class="'request card '+ currentTab.name+'' " >
             <transition name="request-card">
-              <div key="1" class="is-ready" v-if="query && query.ready">
+              <div key="1" class="is-ready" v-if="query && query.ready && !query.error">
                 <div class="card-header">
                   <ul class="nav nav-tabs card-header-tabs">
                     <li class="nav-item">
@@ -78,6 +78,17 @@
                 Use the left side to configure and fire a request.
               </div>
             </transition>
+
+            <div v-if="query && query.error">
+              <div class="alert alert-danger" role="alert">
+                {{ query.error }}
+
+                <div v-if="!query.hasRawError">
+                  <br />
+                  <span class="text-muted">Server configured to hide additional debug information.</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -176,7 +187,12 @@ export default Vue.extend({
       }
     },
     async fetchSchema() {
-      let schemaJson = await (await fetch('/schema.json')).json()
+      let headers = new Headers()
+      headers.append('pragma', 'no-cache')
+      headers.append('cache-control', 'no-cache')
+      let init = { method: 'GET', headers }
+      let request = new Request('/schema.json')
+      let schemaJson = await (await fetch(request)).json()
       this.schema = new Schema(schemaJson)
     },
     reset(endpoint: string, animate: boolean = true) {
@@ -372,11 +388,21 @@ $darkCard: #5c666f;
   cursor: pointer;
 }
 
+.filter-value {
+  transition: all 300ms;
+}
+
 .error {
   animation: error 300ms !important;
 
   .filter-value {
     border: 1px solid red;
+    background: $danger;
+    color: white;
+
+    &::placeholder {
+      color: white;
+    }
   }
 }
 
@@ -390,6 +416,8 @@ $darkCard: #5c666f;
 }
 
 .request.card {
+  position: relative;
+
   .is-ready {
     transition: all 200ms;
     max-height: 1400px;
@@ -398,6 +426,12 @@ $darkCard: #5c666f;
       max-height: 0;
       opacity: 0;
     }
+  }
+
+  .alert-danger {
+    position: absolute !important;
+    top: 20px;
+    animation: error 300ms !important;
   }
 }
 
@@ -593,7 +627,7 @@ pre {
   .modal-content {
     background-color: darken($darkCard, 20%);
     border: 2px solid black;
-    max-height: 100%;
+    max-height: 1200px;
     overflow-y: scroll;
   }
 
@@ -605,6 +639,10 @@ pre {
   .modal-header {
     padding-bottom: 0;
     border-bottom: none;
+
+    .close {
+      z-index: 9999;
+    }
   }
 }
 

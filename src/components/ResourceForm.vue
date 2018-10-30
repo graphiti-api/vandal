@@ -28,7 +28,37 @@
               </div>
 
               <div class='clearfix'>
-                <input v-model="filter.value" type="text" class="filter-value float-left col-10 form-control" placeholder="Enter Filter Value Here" />
+                <div v-if="filter.name && query.resource.filters[filter.name].type === 'boolean'" class="boolean-toggle">
+                  <input v-model="filter.value" type="checkbox" :name="filter.name" :id="filter.name" class="ios-toggle" />
+                  <label :for="filter.name" class="checkbox-label" data-off="off" data-on="on"></label>
+                </div>
+                <div v-else-if="filter.name && query.resource.filters[filter.name].allow">
+                  <select v-model="filter.value" class="filter-value form-control col-10 float-left">
+                    <option disabled value="undefined">Choose</option>
+                    <option v-for="value in query.resource.filters[filter.name].allow" :key="value">
+                      {{ value }}
+                    </option>
+                  </select>
+                </div>
+                <div v-else-if="filter.name && query.resource.filters[filter.name].type === 'date'">
+                  <input
+                    v-model="filter.value"
+                    type="text"
+                    class="filter-value float-left col-10 form-control"
+                    placeholder="M/D/YYYY"
+                  />
+                </div>
+                <div v-else-if="filter.name && query.resource.filters[filter.name].type === 'datetime'">
+                  <input
+                    v-model="filter.value"
+                    type="text"
+                    class="filter-value float-left col-10 form-control"
+                    placeholder="M/D/YYYY h:mma"
+                  />
+                </div>
+                <div v-else>
+                  <input v-model="filter.value" type="text" class="filter-value float-left col-10 form-control" placeholder="Enter Filter Value Here" />
+                </div>
                 <a @click="removeFilter(filter)" class='remove col-1'>x</a>
               </div>
 
@@ -164,8 +194,22 @@ export default Vue.extend({
     removePagination() {
       this.query.page = { number: null, size: null}
     },
-    selectRelationship(name: string, config) {
+    selectRelationship(name: string, config: any) {
       let subResource = this.schema.getResource(config.resource)
+      // NB: doesn't support fields yet b/c ?fields[type] - dont know type
+      if (config.type === 'polymorphic_belongs_to') {
+        let relationships = {}
+        config.resources.forEach((r: any) => {
+          let resource = this.schema.getResource(r)
+          Object.assign(relationships, resource.relationships)
+        })
+        subResource = {
+          polymorphic: true,
+          children: config.resources,
+          relationships
+        }
+      }
+      console.log('subResourcewas', subResource)
       let relationshipPath = name
       if (this.query.relationshipPath) {
         relationshipPath = `${this.query.relationshipPath}.${name}`
@@ -479,6 +523,105 @@ $warning: lighten(yellow, 20%);
         margin-left: 5px;
       }
     }
+  }
+}
+
+.boolean-toggle {
+  width: 60px;
+  margin: auto;
+  text-align: center;
+
+  .ios-toggle, .ios-toggle:active{
+    position:absolute;
+    top:-5000px;
+    height:0;
+    width:0;
+    opacity:0;
+    border:none;
+    outline:none;
+  }
+  .checkbox-label{
+    display:block;
+    position:relative;
+    padding:10px;
+    margin-bottom:20px;
+    font-size:12px;
+    line-height:16px;
+    width:100%;
+    height:36px;
+    /*border-radius*/
+    -webkit-border-radius:18px;
+      -moz-border-radius:18px;
+            border-radius:18px;
+    background:darken(#f8f8f8, 50%);
+    cursor:pointer;
+  }
+  .checkbox-label:before{
+    content:'';
+    display:block;
+    position:absolute;
+    z-index:1;
+    line-height:34px;
+    text-indent:40px;
+    height:36px;
+    width:36px;
+    /*border-radius*/
+    -webkit-border-radius:100%;
+      -moz-border-radius:100%;
+            border-radius:100%;
+    top:0px;
+    left:0px;
+    right:auto;
+    background: #dddddd;
+    box-shadow: 0 3px 3px rgba(0,0,0,.6),0 0 0 0px darken(#dddddd, 60%);
+  }
+  .checkbox-label:after{
+    content:attr(data-off);
+    display:block;
+    position:absolute;
+    z-index:0;
+    top:0;
+    left:-300px;
+    padding:10px;
+    height:100%;
+    width:300px;
+    text-align:right;
+    color:#bfbfbf;
+    white-space:nowrap;
+  }
+  .ios-toggle:checked + .checkbox-label{
+    box-shadow:inset 0 0 0 20px darken($success, 5%),0 0 0 2px darken($success, 5%);
+  }
+  .ios-toggle:checked + .checkbox-label:before{
+    left:calc(100% - 36px);
+    box-shadow:0 0 0 2px transparent,0 3px 3px rgba(0,0,0,.3);
+    background: white;
+  }
+  .ios-toggle:checked + .checkbox-label:after{
+    content:attr(data-on);
+    left:60px;
+    width:36px;
+  }
+  #checkbox1 + .checkbox-label{
+    box-shadow:inset 0 0 0 0px $success,0 0 0 2px #dddddd;
+  }
+  #checkbox1:checked + .checkbox-label{
+    box-shadow:inset 0 0 0 18px $success,0 0 0 2px $success;
+  }
+  #checkbox1:checked + .checkbox-label:after{
+    color: $success;
+  }
+  *,*:before,*:after{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    /*transition*/
+    -webkit-transition:.25s ease-in-out;
+      -moz-transition:.25s ease-in-out;
+        -o-transition:.25s ease-in-out;
+            transition:.25s ease-in-out;
+    outline:none;
+    font-family:Helvetica Neue,helvetica,arial,verdana,sans-serif;
   }
 }
 </style>

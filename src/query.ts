@@ -1,5 +1,6 @@
 import parameterize from "@/util/parameterize"
 import { ResponseTable } from "@/response-table"
+import moment from "moment"
 
 export class Query {
   resource: any
@@ -14,6 +15,8 @@ export class Query {
   data: any
   headers: any[]
   json: any
+  error: string
+  hasRawError: boolean
 
   url: string | null
   urlWithDomain: string | null
@@ -41,10 +44,16 @@ export class Query {
     this.editingRelationship = false
     this.schema = schema
     this.endpointIdParam = null
+    this.error = null
+    this.hasRawError = false
 
-    if (endpoint && endpoint.includes('#show')) {
+    if (this.isShowRoute()) {
       this.filters = [{ name: 'id', operator: 'eq', required: true, error: null }]
     }
+  }
+
+  isShowRoute() : boolean {
+    return this.endpoint && this.endpoint.includes('#show')
   }
 
   hasFilterValue(name: string) {
@@ -69,24 +78,48 @@ export class Query {
     let [path, action] = this.endpoint.split('#')
     let paramStr = parameterize(params)
     if (this.endpointIdParam) path = `${path}/${this.endpointIdParam}`
-    if (paramStr != '') path = `${path}?${paramStr}`
+    if (paramStr.length > 0) path = `${path}?${paramStr}`
     return path
   }
 
   generateCurl() {
     let url = this.urlWithDomain
-    let [base, params] = this.urlWithDomain.split('?')
-    params = encodeURIComponent(params)
-    url = `${base}?${params}`
-    return `curl -H 'Content-Type: application/json' ${url}`
+    let [base, params] = url.split('?')
+    // params = encodeURIComponent(params)
+    url = base
+    if (params != 'undefined') {
+      url = `${url}?${params}`
+    }
+    return `curl -g -H 'Content-Type: application/json' '${url}'`
   }
 
   async fire() {
     this.url = this.generateUrl()
-    this.urlWithDomain = `${this.schema.json.base_url}${this.url}`
-    this.json = await (await fetch(this.url)).json()
+    // this.urlWithDomain = `${window.location.origin}${this.url}`
+    this.urlWithDomain = `http://localhost:3000/${this.url}`
+
+    let headers = new Headers()
+    headers.append('pragma', 'no-cache')
+    headers.append('cache-control', 'no-cache')
+    let init = { method: 'GET', headers }
+    let request = new Request(this.url)
+    this.json = await (await fetch(request)).json()
     this.ready = true
-    this.data = new ResponseTable(this.schema, this.resource, this.json, this.json.data, this.includeHash())
+    this.hasRawError = false
+    this.error = null
+
+    if (this.json.errors) {
+      let error = this.json.errors[0]
+      let message = error.detail
+      let raw = error.meta.__raw_error__
+      if (raw) {
+        message = raw.message
+        this.hasRawError = true
+      }
+      this.error = message
+    } else {
+      this.data = new ResponseTable(this.schema, this.resource, this.json, this.json.data, this.includeHash())
+    }
   }
 
   // param generation
@@ -95,11 +128,16 @@ export class Query {
     let _filters = {} as any
     this.filters.forEach((filter) => {
       if (filter.name) {
-        if (filter.name === 'id') {
+        if (filter.name === 'id' && this.isShowRoute()) {
           this.endpointIdParam = filter.value
         } else {
           let param = {} as any
-          param[filter.operator] = filter.value
+
+          if (this.resource.filters[filter.name].type === 'datetime') {
+            param[filter.operator] = moment(filter.value, 'M/D/YYYY h:mma').toISOString()
+          } else {
+            param[filter.operator] = filter.value
+          }
 
           let name = filter.name
           if (this.relationshipPath) {
@@ -187,8 +225,10 @@ export class Query {
   includeHash() {
     let hash = {}
     this.includes().forEach((path) => {
-      const [last, ...paths] = path.split('.').reverse()
-      Object.assign(hash, paths.reduce((acc, el) => ({ [el]: acc }), { [last]: {} }))
+      if (path) {
+        const [last, ...paths] = path.split('.').reverse()
+        Object.assign(hash, paths.reduce((acc, el) => ({ [el]: acc }), { [last]: {} }))
+      }
     })
     return hash
   }

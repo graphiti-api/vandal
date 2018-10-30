@@ -10,7 +10,7 @@
     <a v-for="e in filteredEndpoints" :key="e" class="endpoint" :class="{ selected: selection === e }">
       <div class="path" @click="toggle(e)">
         <span v-if="selection === e">&laquo;&nbsp;</span>
-        {{ e }}
+        {{ e | endpointDisplay }}
       </div>
 
       <span v-if="selection === e">
@@ -32,14 +32,25 @@ export default Vue.extend({
       query: null as string | null
     }
   },
+  filters: {
+    endpointDisplay: function (endpoint: string) {
+      let split = endpoint.split('/')
+      return split[split.length-1]
+    }
+  },
   computed: {
     filteredEndpoints() : string[] {
+      let filtered = this.endpoints.filter((e: string) => {
+        // only reads for now
+        return e.includes('#index') || e.includes('#show')
+      })
+
       if (this.query) {
-        return this.endpoints.filter((e: string) => {
+        return filtered.filter((e: string) => {
           return e.includes(this.query)
         })
       } else {
-        return this.endpoints
+        return filtered
       }
     },
   },
@@ -130,7 +141,7 @@ export default Vue.extend({
     display: block;
     color: #f0f0f0;
     overflow: hidden;
-    border-top: 1px dotted black;
+    border-top: 1px dotted darken(grey, 22%);
 
     &:hover {
       color: #f0f0f0;

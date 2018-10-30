@@ -2,13 +2,13 @@
   <div class="url-bar">
     <form class="query clearfix" v-if="query && query.endpoint">
       <input id="copy-url" type="hidden" :value="schema.json.base_url + query.url" />
-      <input v-model="query.url" type="text" class="form-control url" placeholder="URL" :class="{ firing }" />
+      <input @input="buildQueryObject" v-model="query.url" type="text" class="form-control url" placeholder="URL" :class="{ firing }" />
 
       <div class="btn-group url-controls">
         <a @click="copyUrl()" title="Copy" class="btn btn-secondary">
           <i class="fas fa-copy"></i>
         </a>
-        <a :href="query.url" target="_blank" class="btn btn-secondary" title="Open in new tab">
+        <a :href="query.urlWithDomain" target="_blank" class="btn btn-secondary" title="Open in new tab">
           <i class="fas fa-external-link-alt"></i>
         </a>
         <a @click="copyAsCurl()" class="btn btn-secondary" title="Copy as Curl">
@@ -21,6 +21,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
+import { urlToQuery } from "@/util/url-to-query"
 
 export default Vue.extend({
   name: 'url-bar',
@@ -37,6 +38,9 @@ export default Vue.extend({
     },
     copyAsCurl() {
       navigator.clipboard.writeText(this.query.generateCurl())
+    },
+    buildQueryObject() {
+      let query = urlToQuery(this.query)
     }
   }
 });

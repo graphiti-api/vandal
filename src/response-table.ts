@@ -37,8 +37,6 @@ export class ResponseTable {
       return row
     })
 
-
-
     json.data = rows
     return json
   }
@@ -85,11 +83,31 @@ export class ResponseTable {
     }
   }
 
+  private _resourceRelationships() {
+    if (this.resource.polymorphic) {
+      let rels = this.resource.relationships || {}
+      this.resource.children.forEach((resourceName: string) => {
+        let childResource = this.schema.getResource(resourceName)
+        rels = Object.assign({}, rels, childResource.relationships)
+      })
+      return rels
+    } else {
+      return this.resource.relationships
+    }
+  }
+
   private _buildRowAttributes(schemaResource, jsonResource) {
     let attrs =  {
       id: {
         value: jsonResource.id,
-        type: schemaResource.attributes.id.type
+        type: this._resourceAttributes().id.type
+      }
+    } as any
+
+    if (schemaResource.polymorphic) {
+      attrs._type = {
+        value: jsonResource.type,
+        type: 'string'
       }
     }
 
@@ -102,7 +120,6 @@ export class ResponseTable {
     return attrs
   }
 
-
   private _buildRelationshipNode(jsonRel) {
     let allNodes = this.json.data
     if (!Array.isArray(allNodes)) allNodes = [allNodes]
@@ -114,12 +131,18 @@ export class ResponseTable {
   }
 
   private _eachRelationship(schemaResource, jsonResource, callback) {
-    eachPair(jsonResource.relationships, (name, rel) => {
+    let relationships = jsonResource.relationships || {}
+    eachPair(relationships, (name, rel) => {
       let nested = this.includeHash[name]
       if (nested) {
+        let config = this._resourceRelationships()[name]
         let relSchemaResource = this.schema.json.resources.filter((r: any) => {
-          return r.name === schemaResource.relationships[name].resource
+          return r.name === config.resource
         })[0]
+        if (config.type === 'polymorphic_belongs_to') {
+          relSchemaResource = { polymorphic: true, children: config.resources }
+        }
+
         let relData = rel.data
         let relRows = [] as any
         if (relData) {

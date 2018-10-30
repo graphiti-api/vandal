@@ -73,7 +73,7 @@ export default Vue.extend({
   },
   computed: {
     relationships() : any {
-      if (this.isShowAction) {
+      if (this.isShowAction && this.depth === 0) {
         return this.object.rows[0].relationships
       } else {
         return this.object.selectedRow.relationships
@@ -222,9 +222,6 @@ $table: darken(grey, 30%);
     }
 
     th {
-      padding-top: 0.75rem;
-      // if go to 0.5, first th has no border bottom
-      padding-bottom: 0.49rem;
       vertical-align: middle;
     }
 
@@ -311,7 +308,7 @@ $table: darken(grey, 30%);
         }
 
         td:first-child, th:first-child {
-          width: 0.9rem * $i;
+          width: 1.2rem * $i;
         }
       }
     }
