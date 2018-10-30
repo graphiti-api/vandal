@@ -10,7 +10,7 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'graphici',
+      name: 'vandal',
       component: All
     },
     {

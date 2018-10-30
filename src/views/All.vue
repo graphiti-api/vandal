@@ -1,5 +1,5 @@
 <template>
-  <div class="graphici" :class="{ creating, modalIsOpen }">
+  <div class="vandal" :class="{ creating, modalIsOpen }">
     <div class="overlay" />
 
     <div v-if="schema" class="top-level-contents" :class="{ resetting }">
@@ -139,7 +139,7 @@ const tabs = [
 ]
 
 export default Vue.extend({
-  name: 'graphici',
+  name: 'vandal',
   components: {
     EndpointList,
     DataTable,
@@ -380,7 +380,7 @@ $darkCard: #5c666f;
   }
 }
 
-.graphici {
+.vandal {
   margin-top: 3rem;
 }
 
