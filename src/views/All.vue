@@ -162,6 +162,7 @@ export default Vue.extend({
     }
   },
   created() {
+    console.log('all created')
     this.fetchSchema()
     let doneCreating = () => { this.creating = false }
     setTimeout(doneCreating, 1000)
@@ -228,7 +229,7 @@ export default Vue.extend({
       if (this.isShowAction) {
         let filter = this.query.filters.filter((f) => { return f.name === 'id' })[0]
         if (!filter.value) {
-          this.tempSet(filter, 'error', true, 1000)
+          this['tempSet'](filter, 'error', true, 1000)
           return false
         } else {
           filter.error = false

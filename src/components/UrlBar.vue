@@ -34,10 +34,10 @@ export default Vue.extend({
   },
   methods: {
     copyUrl() {
-      navigator.clipboard.writeText(this.query.urlWithDomain)
+      navigator['clipboard'].writeText(this.query.urlWithDomain)
     },
     copyAsCurl() {
-      navigator.clipboard.writeText(this.query.generateCurl())
+      navigator['clipboard'].writeText(this.query.generateCurl())
     },
     buildQueryObject() {
       let query = urlToQuery(this.query)

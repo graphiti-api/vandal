@@ -107,7 +107,7 @@
       <div class="relationships section form-group" :class="{ 'editing-subrelationship': query.editingRelationship, nested: (query.editingRelationship && isRelationship), 'active-subrelationship': isActiveSubrelationship, 'inactive-subrelationship': !isActiveSubrelationship, ['depth-'+depth]: true }">
         <label v-if="!(query.editingRelationship && isRelationship)">Relationships</label>
 
-        <div v-for="(config, name) in query.resource.relationships" :key="name" class="relationship clearfix" :class="{ ['depth-'+depth]: true, selected: query.relationships[name], hide: (query.editingRelationship && query.editingRelationship != query.relationships[name]) }">
+        <div v-for="(config, name) in query.possibleRelationships" :key="name" class="relationship clearfix" :class="{ ['depth-'+depth]: true, selected: query.relationships[name], hide: (query.editingRelationship && query.editingRelationship != query.relationships[name]) }">
           <a class='toggle clearfix' @click="toggleRelationship(name, config)">
             <div class="float-left name">{{name}}</div>
 
@@ -120,7 +120,7 @@
         </div>
       </div>
 
-      <div v-for="(config, name) in query.resource.relationships" :key="name">
+      <div v-for="(config, name) in query.relationships" :key="name">
         <div v-if="query.relationships[name]" :class="{ hidden: query.editingRelationship != query.relationships[name] }">
           <resource-form
             :query="query.relationships[name]"

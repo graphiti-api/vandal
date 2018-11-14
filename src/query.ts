@@ -21,6 +21,7 @@ export class Query {
   url: string | null
   urlWithDomain: string | null
   relationships: any
+  possibleRelationships: any
   relationshipPath: string
 
   ready: boolean
@@ -46,9 +47,24 @@ export class Query {
     this.endpointIdParam = null
     this.error = null
     this.hasRawError = false
+    this.possibleRelationships = this.derivePossibleRelationships()
 
     if (this.isShowRoute()) {
       this.filters = [{ name: 'id', operator: 'eq', required: true, error: null }]
+    }
+  }
+
+  derivePossibleRelationships() : any {
+    if (this.resource.polymorphic) {
+      let relationships = Object.assign({}, this.resource.relationships)
+      this.resource.children.forEach((name: string) => {
+        let childResource = this.schema.getResource(name)
+        Object.assign(relationships, childResource.relationships)
+      })
+      console.log('returning relationships')
+      return relationships
+    } else {
+      return this.resource.relationships
     }
   }
 
