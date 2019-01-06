@@ -209,7 +209,6 @@ export default Vue.extend({
           relationships
         }
       }
-      console.log('subResourcewas', subResource)
       let relationshipPath = name
       if (this.query.relationshipPath) {
         relationshipPath = `${this.query.relationshipPath}.${name}`

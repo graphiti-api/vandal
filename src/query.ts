@@ -61,7 +61,6 @@ export class Query {
         let childResource = this.schema.getResource(name)
         Object.assign(relationships, childResource.relationships)
       })
-      console.log('returning relationships')
       return relationships
     } else {
       return this.resource.relationships
@@ -111,8 +110,7 @@ export class Query {
 
   async fire() {
     this.url = this.generateUrl()
-    // this.urlWithDomain = `${window.location.origin}${this.url}`
-    this.urlWithDomain = `http://localhost:3000/${this.url}`
+    this.urlWithDomain = `${window.location.origin}${this.url}`
 
     let headers = new Headers()
     headers.append('pragma', 'no-cache')
