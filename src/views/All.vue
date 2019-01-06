@@ -162,7 +162,6 @@ export default Vue.extend({
     }
   },
   created() {
-    console.log('all created')
     this.fetchSchema()
     let doneCreating = () => { this.creating = false }
     setTimeout(doneCreating, 1000)
@@ -192,7 +191,8 @@ export default Vue.extend({
       headers.append('pragma', 'no-cache')
       headers.append('cache-control', 'no-cache')
       let init = { method: 'GET', headers }
-      let request = new Request('/schema.json')
+      let schemaPath = document.querySelector("meta[name='schema']").getAttribute("content");
+      let request = new Request(schemaPath)
       let schemaJson = await (await fetch(request)).json()
       this.schema = new Schema(schemaJson)
     },

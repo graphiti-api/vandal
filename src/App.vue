@@ -108,7 +108,7 @@ $list-group-bg: $darkCard;
 
 body {
   // height:100vh;
-  background: url('/assets/img/squares.png');
+  background: url('assets/img/squares.png');
 
   .left-rail {
     flex-grow: 1;

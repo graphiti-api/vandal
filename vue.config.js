@@ -3,5 +3,5 @@ module.exports = {
   devServer: {
     proxy: process.env.PROXY
   },
-  baseUrl: '/vandal'
+  baseUrl: ''
 }
