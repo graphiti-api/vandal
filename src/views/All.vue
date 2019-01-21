@@ -195,6 +195,8 @@ export default Vue.extend({
       let request = new Request(schemaPath)
       let schemaJson = await (await fetch(request)).json()
       this.schema = new Schema(schemaJson)
+      this.schema._processRemoteResources()
+      return this.schema
     },
     reset(endpoint: string, animate: boolean = true) {
       if (animate) this.resetting = true
