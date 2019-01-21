@@ -201,8 +201,14 @@ $table: darken(grey, 30%);
         td:first-child {
           color: orange;
           font-weight: bold;
-          font-size: 120%;
+          font-size: 100%;
           border-top: 1px solid rgba(255,255,255,0.1) !important;
+
+          .td-contents {
+            div {
+              white-space: initial;
+            }
+          }
         }
       }
 
@@ -299,7 +305,7 @@ $table: darken(grey, 30%);
       }
     }
 
-    @for $i from 0 through 10 {
+    @for $i from 0 through 40 {
       &.id-length-#{$i} {
         @if 0.7*$i < 2 {
           th:first-child {
@@ -308,7 +314,7 @@ $table: darken(grey, 30%);
         }
 
         td:first-child, th:first-child {
-          width: 1.2rem * $i;
+          width: 0.7rem * $i;
         }
       }
     }
