@@ -196,6 +196,7 @@ export default Vue.extend({
     },
     selectRelationship(name: string, config: any) {
       let subResource = this.schema.getResource(config.resource)
+
       // NB: doesn't support fields yet b/c ?fields[type] - dont know type
       if (config.type === 'polymorphic_belongs_to') {
         let relationships = {}

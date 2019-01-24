@@ -55,6 +55,7 @@ export class Schema {
   }
 
   _addRemoteResource(remoteSchema, localRemoteResource, remoteResource) {
+    remoteResource = Object.assign({}, remoteResource)
     // We're going to merge this to the local remote
     // but we want to keep the local remote name
     delete remoteResource.name
@@ -76,7 +77,7 @@ export class Schema {
           this.json.resources.push(resource)
           this._addRemoteRelationships(remoteSchema, resource.relationships)
         } else {
-          console.log('NOT FOUND', relationship.resource)
+          console.log('Remote Resource Not Found: ', relationship.resource)
         }
       }
     })
