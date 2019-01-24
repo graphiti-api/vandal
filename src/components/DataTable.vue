@@ -152,7 +152,8 @@ $table: darken(grey, 30%);
   }
 
   .table-wrapper {
-    overflow-y: scroll;
+    overflow-y: auto;
+    overflow-x: auto;
   }
 
   &.inactive {
@@ -314,7 +315,7 @@ $table: darken(grey, 30%);
         }
 
         td:first-child, th:first-child {
-          width: 0.7rem * $i;
+          width: 1.15rem * $i;
         }
       }
     }
