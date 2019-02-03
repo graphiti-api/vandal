@@ -89,7 +89,7 @@ export class Schema {
     headers.append('cache-control', 'no-cache')
     let init = { method: 'GET', headers }
     let request = new Request(url)
-    let schemaJson = await (await fetch(request)).json()
+    let schemaJson = await (await fetch(request, init)).json()
     return new Schema(schemaJson)
   }
 }
