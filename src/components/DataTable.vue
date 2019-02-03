@@ -314,8 +314,14 @@ $table: darken(grey, 30%);
           }
         }
 
-        td:first-child, th:first-child {
-          width: 1.15rem * $i;
+        @if $i < 5 {
+          td:first-child, th:first-child {
+            width: 4rem;
+          }
+        } @else {
+          td:first-child, th:first-child {
+            width: 0.75rem * $i;
+          }
         }
       }
     }
