@@ -153,7 +153,6 @@ body {
   background-color: $table;
   border-radius: $border-radius;
   box-shadow: inset 0px -1px 6px -1px black;
-  margin-bottom: 1rem;
   display: table;
   table-layout: fixed;
   position: relative;

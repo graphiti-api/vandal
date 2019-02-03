@@ -154,6 +154,21 @@ $table: darken(grey, 30%);
   .table-wrapper {
     overflow-y: auto;
     overflow-x: auto;
+    margin-bottom: 1rem;
+
+    &::-webkit-scrollbar {
+      height: 0.7rem;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      border-radius: 5px;
+      box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
+      background-color: rgba(0,0,0,0.2);
+    }
   }
 
   &.inactive {
