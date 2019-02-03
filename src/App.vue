@@ -146,7 +146,7 @@ body {
 .table {
   $table: darken(grey, 30%);
   $border-radius: 5px;
-
+  margin-bottom: 0 !important;
   text-align: center;
   border: 1px solid black;
   width: 100%;

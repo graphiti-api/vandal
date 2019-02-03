@@ -40,8 +40,18 @@ export class Schema {
         let baseUrl  = `/${split.join('/')}`
 
         split.pop()
-        let url = `${baseUrl}/schema.json`
-        let remoteSchema = await this._fetch(url) as any
+
+        // Try fetching from the dynamic vandal schema
+        // If that fails, fall back to regular schema
+        let url
+        let remoteSchema
+        try {
+          url = `${baseUrl}/vandal/schema.json`
+          remoteSchema = await this._fetch(url) as any
+        } catch(e) {
+          url = `${baseUrl}/schema.json`
+          remoteSchema = await this._fetch(url) as any
+        }
 
         Object.keys(remoteSchema.json.endpoints).forEach((k) => {
           let config = remoteSchema.json.endpoints[k]
