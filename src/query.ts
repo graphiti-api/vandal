@@ -100,9 +100,8 @@ export class Query {
   generateCurl() {
     let url = this.urlWithDomain
     let [base, params] = url.split('?')
-    // params = encodeURIComponent(params)
     url = base
-    if (params != 'undefined') {
+    if (params && params != 'undefined') {
       url = `${url}?${params}`
     }
     return `curl -g -H 'Content-Type: application/json' '${url}'`
