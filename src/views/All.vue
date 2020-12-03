@@ -173,6 +173,7 @@ import DataTable from "@/components/DataTable.vue";
 import EndpointList from "@/components/EndpointList.vue";
 import UrlBar from "@/components/UrlBar.vue";
 import EventBus from "@/event-bus.ts";
+import axios from "axios";
 
 const tabs = [{ name: "results" }, { name: "raw" }, { name: "debug" }];
 
@@ -235,8 +236,9 @@ export default Vue.extend({
       let schemaPath = document
         .querySelector("meta[name='schema']")
         .getAttribute("content");
-      let request = new Request(schemaPath);
-      let schemaJson = await (await fetch(request)).json();
+      let schemaJson = await axios.get(schemaPath, {
+        headers: headers,
+      });
       this.schema = new Schema(schemaJson);
       this.schema._processRemoteResources();
       return this.schema;

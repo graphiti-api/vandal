@@ -1,3 +1,5 @@
+import axios from "axios";
+
 export class Schema {
   json: any
 
@@ -98,9 +100,9 @@ export class Schema {
     headers.append('pragma', 'no-cache')
     headers.append('cache-control', 'no-cache')
     headers.append('Authorization', `basic ${'token'}`)
-    let init = { method: 'GET', headers }
-    let request = new Request(url)
-    let schemaJson = await (await fetch(request, init)).json()
+    let schemaJson = this.json = await axios.get(url, {
+      headers: headers
+    })
     return new Schema(schemaJson)
   }
 }

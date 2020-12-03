@@ -3,6 +3,8 @@ import App from './App.vue'
 import { router } from './router'
 import moment from 'moment'
 import store from "./store";
+import Axios from 'axios'
+
 const VueHighlightJS = require('vue-highlightjs')
 
 Vue.use(VueHighlightJS)
