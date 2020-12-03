@@ -40,6 +40,8 @@ Vue.filter('dateType', (value: any) => {
 })
 
 Vue.use(store)
+Vue.prototype.axios = Axios
+
 
 new Vue({
   router,

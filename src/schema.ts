@@ -96,13 +96,12 @@ export class Schema {
   }
 
   async _fetch (url) {
-    let headers = new Headers()
-    headers.append('pragma', 'no-cache')
-    headers.append('cache-control', 'no-cache')
-    headers.append('Authorization', `basic ${'token'}`)
-    let schemaJson = this.json = await axios.get(url, {
-      headers: headers
-    })
+    const headers = {
+      pragma: 'no-cache',
+      'cache-control': 'no-cache',
+      Authorization: `basic ${"token"}`,
+    };
+    let schemaJson = await axios.get(url, { headers });
     return new Schema(schemaJson)
   }
 }

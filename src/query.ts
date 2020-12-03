@@ -112,13 +112,12 @@ export class Query {
     this.url = this.generateUrl()
     this.urlWithDomain = `${window.location.origin}${this.url}`
 
-    let headers = new Headers()
-    headers.append('pragma', 'no-cache')
-    headers.append('cache-control', 'no-cache')
-    headers.append('Authorization', `basic ${'token'}`)
-    this.json = await axios.get(this.urlWithDomain, {
-      headers: headers
-    })
+    const headers = {
+      pragma: 'no-cache',
+      'cache-control': 'no-cache',
+      Authorization: `basic ${"token"}`,
+    };
+    this.json = await axios.get(this.urlWithDomain, { headers });
     this.ready = true
     this.hasRawError = false
     this.error = null
