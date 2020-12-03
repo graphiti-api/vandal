@@ -228,17 +228,16 @@ export default Vue.extend({
       }
     },
     async fetchSchema() {
-      let headers = new Headers();
-      headers.append("pragma", "no-cache");
-      headers.append("cache-control", "no-cache");
-      headers.append("Authorization", `basic ${"token"}`);
+      const headers = {
+        pragma: "no-cache",
+        "cache-control": "no-cache",
+        Authorization: `basic ${"token"}`,
+      };
       let init = { method: "GET", headers };
       let schemaPath = document
         .querySelector("meta[name='schema']")
         .getAttribute("content");
-      let schemaJson = await axios.get(schemaPath, {
-        headers: headers,
-      });
+      let schemaJson = await axios.get(schemaPath, { headers });
       this.schema = new Schema(schemaJson);
       this.schema._processRemoteResources();
       return this.schema;
