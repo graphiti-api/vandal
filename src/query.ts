@@ -1,6 +1,7 @@
 import parameterize from "@/util/parameterize"
 import { ResponseTable } from "@/response-table"
 import moment from "moment"
+import axios from "axios"
 
 export class Query {
   resource: any
@@ -115,9 +116,9 @@ export class Query {
     headers.append('pragma', 'no-cache')
     headers.append('cache-control', 'no-cache')
     headers.append('Authorization', `basic ${'token'}`)
-    let init = { method: 'GET', headers }
-    let request = new Request(this.url)
-    this.json = await (await fetch(request, init)).json()
+    this.json = await axios.get(this.urlWithDomain, {
+      headers: headers
+    })
     this.ready = true
     this.hasRawError = false
     this.error = null
