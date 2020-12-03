@@ -1,14 +1,27 @@
 <template>
-  <div class="vandal" :class="{ creating, modalIsOpen }">
+  <div
+    class="vandal"
+    :class="{ creating, modalIsOpen }"
+  >
     <div class="overlay" />
 
-    <div v-if="schema" class="top-level-contents" :class="{ resetting }">
+    <div
+      v-if="schema"
+      class="top-level-contents"
+      :class="{ resetting }"
+    >
       <div class="row">
         <div class="col-3 left-rail">
           <div class="card">
-            <endpoint-list :endpoints="schema.endpoints" @toggle="toggleEndpoint">
+            <endpoint-list
+              :endpoints="schema.endpoints"
+              @toggle="toggleEndpoint"
+            >
               <div class="submission clearfix">
-                <a class="reset" @click="reset(query.endpoint)">Reset</a>
+                <a
+                  class="reset"
+                  @click="reset(query.endpoint)"
+                >Reset</a>
                 <button
                   @click="fetch()"
                   type="submit"
@@ -30,11 +43,19 @@
         </div>
 
         <div class="col-9 main">
-          <url-bar :schema="schema" :query="query" :firing="firing" />
+          <url-bar
+            :schema="schema"
+            :query="query"
+            :firing="firing"
+          />
 
-          <div :class="'request card '+ currentTab.name+'' " >
+          <div :class="'request card '+ currentTab.name+'' ">
             <transition name="request-card">
-              <div key="1" class="is-ready" v-if="query && query.ready && !query.error">
+              <div
+                key="1"
+                class="is-ready"
+                v-if="query && query.ready && !query.error"
+              >
                 <div class="card-header">
                   <ul class="nav nav-tabs card-header-tabs">
                     <li class="nav-item">
@@ -60,7 +81,10 @@
 
                 <div class="card-body">
                   <div v-if="currentTab.name == 'raw'">
-                    <pre v-highlightjs v-if="query.data.json">
+                    <pre
+                      v-highlightjs
+                      v-if="query.data.json"
+                    >
                       <code class="json">{{ query.data.json }}</code>
                     </pre>
                   </div>
@@ -70,17 +94,27 @@
                     v-if="currentTab.name == 'results'"
                     :class="{ 'loading-area-active': isLoading }"
                   >
-                    <data-table :depth="0" :object="query.data" :isShowAction="isShowAction" />
+                    <data-table
+                      :depth="0"
+                      :object="query.data"
+                      :isShowAction="isShowAction"
+                    />
                   </div>
                 </div>
               </div>
-              <div class="is-not-ready" v-else>
+              <div
+                class="is-not-ready"
+                v-else
+              >
                 Use the left side to configure and fire a request.
               </div>
             </transition>
 
             <div v-if="query && query.error">
-              <div class="alert alert-danger" role="alert">
+              <div
+                class="alert alert-danger"
+                role="alert"
+              >
                 {{ query.error }}
 
                 <div v-if="!query.hasRawError">
@@ -98,8 +132,16 @@
     </div>
 
     <transition name="modal">
-      <div v-if="modalIsOpen" class="modal" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
+      <div
+        v-if="modalIsOpen"
+        class="modal"
+        tabindex="-1"
+        role="dialog"
+      >
+        <div
+          class="modal-dialog"
+          role="document"
+        >
           <div class="modal-content">
             <div class="modal-header">
               <button
@@ -123,28 +165,24 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
-import { Schema } from '@/schema'
-import { Query } from '@/query'
-import ResourceForm from '@/components/ResourceForm.vue'
-import DataTable from '@/components/DataTable.vue'
-import EndpointList from '@/components/EndpointList.vue'
-import UrlBar from '@/components/UrlBar.vue'
-import EventBus from '@/event-bus.ts'
+import Vue from "vue";
+import { Schema } from "@/schema";
+import { Query } from "@/query";
+import ResourceForm from "@/components/ResourceForm.vue";
+import DataTable from "@/components/DataTable.vue";
+import EndpointList from "@/components/EndpointList.vue";
+import UrlBar from "@/components/UrlBar.vue";
+import EventBus from "@/event-bus.ts";
 
-const tabs = [
-  { name: 'results' },
-  { name: 'raw' },
-  { name: 'debug' }
-]
+const tabs = [{ name: "results" }, { name: "raw" }, { name: "debug" }];
 
 export default Vue.extend({
-  name: 'vandal',
+  name: "vandal",
   components: {
     EndpointList,
     DataTable,
     ResourceForm,
-    UrlBar
+    UrlBar,
   },
   data() {
     return {
@@ -158,66 +196,73 @@ export default Vue.extend({
       modalIsOpen: false,
       modalContent: null as string | null,
       firing: false as boolean,
-      resetting: false as boolean
-    }
+      resetting: false as boolean,
+    };
   },
   created() {
-    this.fetchSchema()
-    let doneCreating = () => { this.creating = false }
-    setTimeout(doneCreating, 1000)
-    EventBus.$on('modalToggle', this.onModalToggle)
+    this.fetchSchema();
+    let doneCreating = () => {
+      this.creating = false;
+    };
+    setTimeout(doneCreating, 1000);
+    EventBus.$on("modalToggle", this.onModalToggle);
   },
   computed: {
-    isShowAction() : any {
-      if (this.query) return this.query.endpoint.includes('#show')
-    }
+    isShowAction(): any {
+      if (this.query) return this.query.endpoint.includes("#show");
+    },
   },
   methods: {
     onModalToggle(content: string) {
-      this.modalContent = content
-      this.modalIsOpen = !this.modalIsOpen
+      this.modalContent = content;
+      this.modalIsOpen = !this.modalIsOpen;
     },
     toggleEndpoint(endpoint: string) {
       if (endpoint) {
-        this.resource = this.schema.resourceFor(endpoint)
-        this.reset(endpoint, false)
+        this.resource = this.schema.resourceFor(endpoint);
+        this.reset(endpoint, false);
       } else {
-        this.resource = null
-        this.query = null
+        this.resource = null;
+        this.query = null;
       }
     },
     async fetchSchema() {
-      let headers = new Headers()
-      headers.append('pragma', 'no-cache')
-      headers.append('cache-control', 'no-cache')
-      let init = { method: 'GET', headers }
-      let schemaPath = document.querySelector("meta[name='schema']").getAttribute("content");
-      let request = new Request(schemaPath)
-      let schemaJson = await (await fetch(request)).json()
-      this.schema = new Schema(schemaJson)
-      this.schema._processRemoteResources()
-      return this.schema
+      let headers = new Headers();
+      headers.append("pragma", "no-cache");
+      headers.append("cache-control", "no-cache");
+      headers.append("Authorization", `basic ${"token"}`);
+      let init = { method: "GET", headers };
+      let schemaPath = document
+        .querySelector("meta[name='schema']")
+        .getAttribute("content");
+      let request = new Request(schemaPath);
+      let schemaJson = await (await fetch(request)).json();
+      this.schema = new Schema(schemaJson);
+      this.schema._processRemoteResources();
+      return this.schema;
     },
     reset(endpoint: string, animate: boolean = true) {
-      if (animate) this.resetting = true
-      this.query = new Query(this.schema, this.resource, endpoint)
-      let doReset = () => { this.resetting = false }
-      if (animate) setTimeout(doReset, 100)
+      if (animate) this.resetting = true;
+      this.query = new Query(this.schema, this.resource, endpoint);
+      let doReset = () => {
+        this.resetting = false;
+      };
+      if (animate) setTimeout(doReset, 100);
     },
     async fetch() {
       if (this.validate()) {
-        this.firing = true
+        this.firing = true;
         let unfire = () => {
-          this.firing = false
-        }
-        setTimeout(unfire, 100)
-        this.isLoading = true
-        let then = Date.now()
-        await this.query.fire()
-        let now = Date.now()
+          this.firing = false;
+        };
+        setTimeout(unfire, 100);
+        this.isLoading = true;
+        let then = Date.now();
+        await this.query.fire();
+        let now = Date.now();
         // Force min of 100ms
-        await this.stall(100-(now - then))
-        this.isLoading = false
+        await this.stall(100 - (now - then));
+        this.isLoading = false;
       }
     },
     validate() {
@@ -229,25 +274,27 @@ export default Vue.extend({
       // })
 
       if (this.isShowAction) {
-        let filter = this.query.filters.filter((f) => { return f.name === 'id' })[0]
+        let filter = this.query.filters.filter((f) => {
+          return f.name === "id";
+        })[0];
         if (!filter.value) {
-          this['tempSet'](filter, 'error', true, 1000)
-          return false
+          this["tempSet"](filter, "error", true, 1000);
+          return false;
         } else {
-          filter.error = false
-          return true
+          filter.error = false;
+          return true;
         }
       } else {
-        return true
+        return true;
       }
     },
     tab(index: number) {
-      this.currentTab = tabs[index]
+      this.currentTab = tabs[index];
     },
     stall(stallTime = 3000) {
-      return new Promise(resolve => setTimeout(resolve, stallTime));
-    }
-  }
+      return new Promise((resolve) => setTimeout(resolve, stallTime));
+    },
+  },
 });
 </script>
 
@@ -438,7 +485,8 @@ $darkCard: #5c666f;
   }
 }
 
-.hide, .form-group.hide {
+.hide,
+.form-group.hide {
   animation: slide-up 0.4s ease forwards;
   max-height: 0;
   padding: 0 !important;
@@ -486,7 +534,8 @@ $darkCard: #5c666f;
       font-size: 110%;
     }
 
-    &:focus, &:active {
+    &:focus,
+    &:active {
       box-shadow: none;
       border: none;
     }
@@ -565,32 +614,36 @@ pre {
 
   code.hljs {
     background-color: transparent;
-    color: lighten(#DAE4F2, 5%);
+    color: lighten(#dae4f2, 5%);
     line-height: 20px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 
-    &.coffeescript, &.cs, &.javascript, &.json {
-      [class*=built_in] {
-        color: lighten(#9AB4DB, 5%);
+    &.coffeescript,
+    &.cs,
+    &.javascript,
+    &.json {
+      [class*="built_in"] {
+        color: lighten(#9ab4db, 5%);
       }
-      [class*=string] {
+      [class*="string"] {
         color: lightgreen;
       }
-      [class*=attribute] {
+      [class*="attribute"] {
         color: white;
       }
-      [class*=literal] {
+      [class*="literal"] {
         color: lighten(red, 30%);
       }
-      [class*=c1] {
-        color: #B4B4B4;
+      [class*="c1"] {
+        color: #b4b4b4;
       }
-      [class*=constant] {
-        color: #FFDF9D;
+      [class*="constant"] {
+        color: #ffdf9d;
       }
-      [class*=nx], [class*=number] {
-        color: darken(#9ECBEE, 5%);
+      [class*="nx"],
+      [class*="number"] {
+        color: darken(#9ecbee, 5%);
       }
     }
   }
@@ -677,14 +730,14 @@ pre {
 
 .modalIsOpen {
   .overlay {
-    position:fixed;
-    top:0;
-    bottom:0;
-    left:0;
-    right:0;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
     background-color: black;
-    opacity:0.55;
-    z-index:1001
+    opacity: 0.55;
+    z-index: 1001;
   }
 
   .top-level-contents {

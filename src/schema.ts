@@ -5,20 +5,20 @@ export class Schema {
     this.json = json
   }
 
-  getResource(name: string) {
+  getResource (name: string) {
     let resource = this.json.resources.find((r: any) => {
       return r.name == name
     })
     return resource
   }
 
-  resourceFor(endpoint: any) {
+  resourceFor (endpoint: any) {
     let [path, action] = endpoint.split('#')
     let resourceName = this.json.endpoints[path]['actions'][action].resource
     return this.getResource(resourceName)
   }
 
-  get endpoints() {
+  get endpoints () {
     let endpoints = [] as any
     Object.keys(this.json.endpoints).forEach((path) => {
       Object.keys(this.json.endpoints[path].actions).forEach((action) => {
@@ -28,8 +28,8 @@ export class Schema {
     return endpoints
   }
 
-  async _processRemoteResources() {
-    this.json.resources.forEach( async (r) => {
+  async _processRemoteResources () {
+    this.json.resources.forEach(async (r) => {
       if (r.remote) {
         let split = r.remote.split('/')
         split.shift()
@@ -37,7 +37,7 @@ export class Schema {
         split.shift()
         let path = `/${split.join('/')}`
         split.pop()
-        let baseUrl  = `/${split.join('/')}`
+        let baseUrl = `/${split.join('/')}`
 
         split.pop()
 
@@ -48,7 +48,7 @@ export class Schema {
         try {
           url = `${baseUrl}/vandal/schema.json`
           remoteSchema = await this._fetch(url) as any
-        } catch(e) {
+        } catch (e) {
           url = `${baseUrl}/schema.json`
           remoteSchema = await this._fetch(url) as any
         }
@@ -64,7 +64,7 @@ export class Schema {
     })
   }
 
-  _addRemoteResource(remoteSchema, localRemoteResource, remoteResource) {
+  _addRemoteResource (remoteSchema, localRemoteResource, remoteResource) {
     remoteResource = Object.assign({}, remoteResource)
     // We're going to merge this to the local remote
     // but we want to keep the local remote name
@@ -77,7 +77,7 @@ export class Schema {
     this._addRemoteRelationships(remoteSchema, remoteResource.relationships)
   }
 
-  _addRemoteRelationships(remoteSchema, relationships) {
+  _addRemoteRelationships (remoteSchema, relationships) {
     Object.keys(relationships).forEach((k) => {
       let relationship = relationships[k]
       let existing = this.getResource(relationship.resource)
@@ -93,10 +93,11 @@ export class Schema {
     })
   }
 
-  async _fetch(url) {
+  async _fetch (url) {
     let headers = new Headers()
     headers.append('pragma', 'no-cache')
     headers.append('cache-control', 'no-cache')
+    headers.append('Authorization', `basic ${'token'}`)
     let init = { method: 'GET', headers }
     let request = new Request(url)
     let schemaJson = await (await fetch(request, init)).json()
