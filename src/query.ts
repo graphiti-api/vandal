@@ -120,7 +120,7 @@ export class Query {
     headers.append('cache-control', 'no-cache')
 
     if (this.includeAuth) {
-      headers.append('authorization', '')
+      headers.append('Authorization', this.token)
     }
     let init = { method: 'GET', headers }
     let request = new Request(this.url)
