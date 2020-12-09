@@ -11,9 +11,6 @@ export const router = new Router({
       path: '/',
       name: 'vandal',
       component: All,
-      meta: {
-        requiresAuth: true,
-      },
     }
   ]
 })

@@ -5,6 +5,22 @@
   >
     <div class="overlay" />
 
+    <!-- <input
+      v-if="!submitted"
+      v-model="token"
+      placeholder="token"
+    > -->
+
+    <!-- <button
+      v-if="!submitted"
+      @click="submitToken"
+    >Submit token</button>
+    <button
+      v-if="!submitted"
+      @click="denyAuth"
+      style="color:red;"
+    >No Auth</button> -->
+
     <div
       v-if="schema"
       class="top-level-contents"
@@ -173,7 +189,6 @@ import DataTable from "@/components/DataTable.vue";
 import EndpointList from "@/components/EndpointList.vue";
 import UrlBar from "@/components/UrlBar.vue";
 import EventBus from "@/event-bus.ts";
-import axios from "axios";
 
 const tabs = [{ name: "results" }, { name: "raw" }, { name: "debug" }];
 
@@ -198,9 +213,24 @@ export default Vue.extend({
       modalContent: null as string | null,
       firing: false as boolean,
       resetting: false as boolean,
+      useAuth: false as boolean,
+      submitted: false as boolean,
+      token: null as string,
     };
   },
   created() {
+    var txt;
+    var token = prompt("Please enter an Auth token if you want to use one.");
+    if (token == null || token == "") {
+      txt = "User cancelled the prompt.";
+      this.useAuth = false;
+    } else {
+      this.token = token;
+      this.useAuth = true;
+    }
+    document.getElementById("demo").innerHTML = txt;
+  },
+  mounted() {
     this.fetchSchema();
     let doneCreating = () => {
       this.creating = false;
@@ -228,16 +258,15 @@ export default Vue.extend({
       }
     },
     async fetchSchema() {
-      const headers = {
-        pragma: "no-cache",
-        "cache-control": "no-cache",
-        Authorization: `basic ${"token"}`,
-      };
+      let headers = new Headers();
+      headers.append("pragma", "no-cache");
+      headers.append("cache-control", "no-cache");
       let init = { method: "GET", headers };
       let schemaPath = document
         .querySelector("meta[name='schema']")
         .getAttribute("content");
-      let schemaJson = await axios.get(schemaPath, { headers });
+      let request = new Request(schemaPath);
+      let schemaJson = await (await fetch(request, init)).json();
       this.schema = new Schema(schemaJson);
       this.schema._processRemoteResources();
       return this.schema;
@@ -245,6 +274,8 @@ export default Vue.extend({
     reset(endpoint: string, animate: boolean = true) {
       if (animate) this.resetting = true;
       this.query = new Query(this.schema, this.resource, endpoint);
+      this.query.includeAuth = this.useAuth;
+      this.query.token = this.token;
       let doReset = () => {
         this.resetting = false;
       };
@@ -273,7 +304,6 @@ export default Vue.extend({
       //     filter.error = true
       //   }
       // })
-
       if (this.isShowAction) {
         let filter = this.query.filters.filter((f) => {
           return f.name === "id";
@@ -295,9 +325,20 @@ export default Vue.extend({
     stall(stallTime = 3000) {
       return new Promise((resolve) => setTimeout(resolve, stallTime));
     },
+    denyAuth() {
+      this.useAuth = false;
+      this.submitted = true;
+      console.log(this.token);
+    },
+    submitToken() {
+      this.useAuth = this.submitted = true;
+      console.log(this.token);
+    },
+    getSchema() {},
   },
 });
 </script>
+
 
 <style lang="scss">
 $success: lighten(green, 60%);
