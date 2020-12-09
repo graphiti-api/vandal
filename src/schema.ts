@@ -1,5 +1,3 @@
-import axios from "axios";
-
 export class Schema {
   json: any
 
@@ -96,12 +94,12 @@ export class Schema {
   }
 
   async _fetch (url) {
-    const headers = {
-      pragma: 'no-cache',
-      'cache-control': 'no-cache',
-      Authorization: `basic ${"token"}`,
-    };
-    let schemaJson = await axios.get(url, { headers });
+    let headers = new Headers()
+    headers.append('pragma', 'no-cache')
+    headers.append('cache-control', 'no-cache')
+    let init = { method: 'GET', headers }
+    let request = new Request(url)
+    let schemaJson = await (await fetch(request, init)).json()
     return new Schema(schemaJson)
   }
 }

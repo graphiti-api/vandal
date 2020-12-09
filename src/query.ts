@@ -1,7 +1,6 @@
 import parameterize from "@/util/parameterize"
 import { ResponseTable } from "@/response-table"
 import moment from "moment"
-import axios from "axios"
 
 export class Query {
   resource: any
@@ -15,6 +14,8 @@ export class Query {
 
   data: any
   headers: any[]
+  includeAuth: boolean
+  token: string
   json: any
   error: string
   hasRawError: boolean
@@ -37,6 +38,8 @@ export class Query {
     this.filters = [{ name: null, operator: 'eq', error: null }]
     this.data = {}
     this.headers = []
+    this.includeAuth = false
+    this.token = ''
     this.url = null
     this.urlWithDomain = null
     this.page = {}
@@ -112,12 +115,16 @@ export class Query {
     this.url = this.generateUrl()
     this.urlWithDomain = `${window.location.origin}${this.url}`
 
-    const headers = {
-      pragma: 'no-cache',
-      'cache-control': 'no-cache',
-      Authorization: `basic ${"token"}`,
-    };
-    this.json = await axios.get(this.urlWithDomain, { headers });
+    let headers = new Headers()
+    headers.append('pragma', 'no-cache')
+    headers.append('cache-control', 'no-cache')
+
+    if (this.includeAuth) {
+      headers.append('authorization', '')
+    }
+    let init = { method: 'GET', headers }
+    let request = new Request(this.url)
+    this.json = await (await fetch(request, init)).json()
     this.ready = true
     this.hasRawError = false
     this.error = null
