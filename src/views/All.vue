@@ -173,6 +173,7 @@ import DataTable from "@/components/DataTable.vue";
 import EndpointList from "@/components/EndpointList.vue";
 import UrlBar from "@/components/UrlBar.vue";
 import EventBus from "@/event-bus.ts";
+import store from "@/store";
 
 const tabs = [{ name: "results" }, { name: "raw" }, { name: "debug" }];
 
@@ -203,7 +204,7 @@ export default Vue.extend({
     };
   },
   created() {
-    if (!this.token) {
+    if (!store.state.token) {
       const msg =
         "If you want to use an authorization header, type in your token.\n" +
         "This token will be used when firing queries against the server.\n" +
@@ -217,7 +218,11 @@ export default Vue.extend({
         this.useAuth = true;
       }
       this.submitted = true;
+      store.commit("setToken", this.token);
+    } else {
+      this.token = store.state.token;
     }
+    window.addEventListener("beforeunload", localStorage.clear);
   },
   mounted() {
     this.fetchSchema();
