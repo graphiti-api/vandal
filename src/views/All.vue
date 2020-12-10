@@ -204,7 +204,7 @@ export default Vue.extend({
     };
   },
   created() {
-    if (!store.state.token) {
+    if (!this.token) {
       const msg =
         "If you want to use an authorization header, type in your token.\n" +
         "This token will be used when firing queries against the server.\n" +
@@ -218,9 +218,7 @@ export default Vue.extend({
         this.useAuth = true;
       }
       this.submitted = true;
-      store.commit("setToken", this.token);
-    } else {
-      this.token = store.state.token;
+      this.token = token;
     }
   },
   mounted() {
