@@ -222,7 +222,6 @@ export default Vue.extend({
     } else {
       this.token = store.state.token;
     }
-    window.addEventListener("beforeunload", localStorage.clear);
   },
   mounted() {
     this.fetchSchema();
