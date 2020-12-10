@@ -1,12 +1,8 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
+import createPersistedState from 'vuex-persistedstate';
+
 
 Vue.use(Vuex);
 
-export default function (/* { ssrContext } */) {
-  const Store = new Vuex.Store({
-    strict: process.env.DEV,
-  });
-
-  return Store;
-}
+export default new Vuex.Store({});

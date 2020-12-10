@@ -40,11 +40,12 @@ Vue.filter('dateType', (value: any) => {
   }
 })
 
-Vue.use(store)
+// Vue.use(Store)
 Vue.prototype.axios = Axios
 Vue.use(VueResource)
 
 new Vue({
   router,
+  store,
   render: h => h(App),
 }).$mount('#app')
