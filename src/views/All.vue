@@ -10,6 +10,18 @@
       class="top-level-contents"
       :class="{ resetting }"
     >
+      <div class="card left-rail row">
+            <span class="fa-stack fa-2x" @click="setAuth">
+            <i class="fas fa-key fa-stack-1x" style="color:orange"></i>
+            <i class="fas fa-ban fa-stack-2x" id="cross" style="color:lightgray"></i>
+            </span>
+          <input  v-model="token" 
+                  type="text" 
+                  class="float-right" 
+                  placeholder="Enter Auth Token"
+                  />      
+      </div>
+
       <div class="row">
         <div class="col-3 left-rail">
           <div class="card">
@@ -203,24 +215,24 @@ export default Vue.extend({
       token: null as string,
     };
   },
-  created() {
-    if (!this.token) {
-      const msg =
-        "If you want to use an authorization header, type in your token.\n" +
-        "This token will be used when firing queries against the server.\n" +
-        "Chancling means that there will be no header set.";
-      const token = prompt(msg);
-      if (token == null || token == "") {
-        this.token = "";
-        this.useAuth = false;
-      } else {
-        this.token = token;
-        this.useAuth = true;
-      }
-      this.submitted = true;
-      this.token = token;
-    }
-  },
+  // created() {
+  //   if (!this.token) {
+  //     const msg =
+  //       "If you want to use an authorization header, type in your token.\n" +
+  //       "This token will be used when firing queries against the server.\n" +
+  //       "Chancling means that there will be no header set.";
+  //     const token = prompt(msg);
+  //     if (token == null || token == "") {
+  //       this.token = "";
+  //       this.useAuth = false;
+  //     } else {
+  //       this.token = token;
+  //       this.useAuth = true;
+  //     }
+  //     this.submitted = true;
+  //     this.token = token;
+  //   }
+  // },
   mounted() {
     this.fetchSchema();
     let doneCreating = () => {
@@ -233,6 +245,18 @@ export default Vue.extend({
     isShowAction(): any {
       if (this.query) return this.query.endpoint.includes("#show");
     },
+  },
+  watch: {
+    token() {
+      if( this.query ) {
+        this.query.token = this.token;
+      }
+    },
+    useAuth() {
+      if( this.query ) {
+        this.query.includeAuth = this.useAuth;
+      }
+    }
   },
   methods: {
     onModalToggle(content: string) {
@@ -325,7 +349,17 @@ export default Vue.extend({
       this.useAuth = this.submitted = true;
       console.log(this.token);
     },
-    getSchema() {},
+    setAuth() {
+      var cross = document.getElementById("cross");
+      if (cross.style.display === "none") {
+        console.log("block")
+        cross.style.display = "block";
+        this.useAuth = false;
+      } else {
+        cross.style.display = "none";
+        this.useAuth = true;
+      }
+    },
   },
 });
 </script>
@@ -782,5 +816,10 @@ pre {
   .modal {
     animation: modal-open 200ms;
   }
+}
+
+.card {
+  margin: 1%;
+  // margin-right: 1%;
 }
 </style>
