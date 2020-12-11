@@ -5,22 +5,6 @@
   >
     <div class="overlay" />
 
-    <!-- <input
-      v-if="!submitted"
-      v-model="token"
-      placeholder="token"
-    > -->
-
-    <!-- <button
-      v-if="!submitted"
-      @click="submitToken"
-    >Submit token</button>
-    <button
-      v-if="!submitted"
-      @click="denyAuth"
-      style="color:red;"
-    >No Auth</button> -->
-
     <div
       v-if="schema"
       class="top-level-contents"
@@ -189,6 +173,7 @@ import DataTable from "@/components/DataTable.vue";
 import EndpointList from "@/components/EndpointList.vue";
 import UrlBar from "@/components/UrlBar.vue";
 import EventBus from "@/event-bus.ts";
+import store from "@/store";
 
 const tabs = [{ name: "results" }, { name: "raw" }, { name: "debug" }];
 
@@ -219,16 +204,22 @@ export default Vue.extend({
     };
   },
   created() {
-    var txt;
-    var token = prompt("Please enter an Auth token if you want to use one.");
-    if (token == null || token == "") {
-      txt = "User cancelled the prompt.";
-      this.useAuth = false;
-    } else {
+    if (!this.token) {
+      const msg =
+        "If you want to use an authorization header, type in your token.\n" +
+        "This token will be used when firing queries against the server.\n" +
+        "Chancling means that there will be no header set.";
+      const token = prompt(msg);
+      if (token == null || token == "") {
+        this.token = "";
+        this.useAuth = false;
+      } else {
+        this.token = token;
+        this.useAuth = true;
+      }
+      this.submitted = true;
       this.token = token;
-      this.useAuth = true;
     }
-    document.getElementById("demo").innerHTML = txt;
   },
   mounted() {
     this.fetchSchema();

@@ -3,8 +3,6 @@ import App from './App.vue'
 import { router } from './router'
 import moment from 'moment'
 import store from "./store";
-import Axios from 'axios'
-import VueResource from 'vue-resource'
 
 const VueHighlightJS = require('vue-highlightjs')
 
@@ -40,11 +38,8 @@ Vue.filter('dateType', (value: any) => {
   }
 })
 
-Vue.use(store)
-Vue.prototype.axios = Axios
-Vue.use(VueResource)
-
 new Vue({
   router,
+  store,
   render: h => h(App),
 }).$mount('#app')

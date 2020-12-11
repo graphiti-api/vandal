@@ -3,10 +3,5 @@ import Vuex from 'vuex';
 
 Vue.use(Vuex);
 
-export default function (/* { ssrContext } */) {
-  const Store = new Vuex.Store({
-    strict: process.env.DEV,
-  });
+export default new Vuex.Store({})
 
-  return Store;
-}
