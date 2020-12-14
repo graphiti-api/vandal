@@ -15,7 +15,8 @@
             <i class="fas fa-key fa-stack-1x" style="color:orange"></i>
             <i class="fas fa-ban fa-stack-2x" id="cross" style="color:lightgray"></i>
             </span>
-          <input  v-model="token" 
+          <input  v-if="useAuth"
+                  v-model="token" 
                   type="text" 
                   class="float-right" 
                   placeholder="Enter Auth Token"
@@ -185,7 +186,6 @@ import DataTable from "@/components/DataTable.vue";
 import EndpointList from "@/components/EndpointList.vue";
 import UrlBar from "@/components/UrlBar.vue";
 import EventBus from "@/event-bus.ts";
-import store from "@/store";
 
 const tabs = [{ name: "results" }, { name: "raw" }, { name: "debug" }];
 
@@ -211,28 +211,9 @@ export default Vue.extend({
       firing: false as boolean,
       resetting: false as boolean,
       useAuth: false as boolean,
-      submitted: false as boolean,
       token: null as string,
     };
   },
-  // created() {
-  //   if (!this.token) {
-  //     const msg =
-  //       "If you want to use an authorization header, type in your token.\n" +
-  //       "This token will be used when firing queries against the server.\n" +
-  //       "Chancling means that there will be no header set.";
-  //     const token = prompt(msg);
-  //     if (token == null || token == "") {
-  //       this.token = "";
-  //       this.useAuth = false;
-  //     } else {
-  //       this.token = token;
-  //       this.useAuth = true;
-  //     }
-  //     this.submitted = true;
-  //     this.token = token;
-  //   }
-  // },
   mounted() {
     this.fetchSchema();
     let doneCreating = () => {
@@ -339,15 +320,6 @@ export default Vue.extend({
     },
     stall(stallTime = 3000) {
       return new Promise((resolve) => setTimeout(resolve, stallTime));
-    },
-    denyAuth() {
-      this.useAuth = false;
-      this.submitted = true;
-      console.log(this.token);
-    },
-    submitToken() {
-      this.useAuth = this.submitted = true;
-      console.log(this.token);
     },
     setAuth() {
       var cross = document.getElementById("cross");
