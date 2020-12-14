@@ -186,7 +186,9 @@ import DataTable from "@/components/DataTable.vue";
 import EndpointList from "@/components/EndpointList.vue";
 import UrlBar from "@/components/UrlBar.vue";
 import EventBus from "@/event-bus.ts";
+import SecureLS from "secure-ls";
 
+const ls = new SecureLS({encodingType: 'aes', isCompression: false});
 const tabs = [{ name: "results" }, { name: "raw" }, { name: "debug" }];
 
 export default Vue.extend({
@@ -214,6 +216,11 @@ export default Vue.extend({
       token: null as string,
     };
   },
+  created() {
+    if(ls.get("token")) {
+      this.token = ls.get("token")
+    }
+  },
   mounted() {
     this.fetchSchema();
     let doneCreating = () => {
@@ -229,6 +236,9 @@ export default Vue.extend({
   },
   watch: {
     token() {
+      ls.remove("token");
+      ls.set("token", this.token)
+
       if( this.query ) {
         this.query.token = this.token;
       }
