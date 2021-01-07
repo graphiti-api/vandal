@@ -1,0 +1,7 @@
+#!/bin/bash
+
+sed -i "s|\"__REMOTE_HOSTS__\"|'$REMOTE_HOSTS'|g" /vandal/public/index.html
+#sed -i -e "s/INSTHOME/$HOME/g" config.ini
+cd /vandal
+yarn install
+yarn serve --host 0.0.0.0 --disable-host-check
