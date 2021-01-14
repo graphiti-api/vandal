@@ -1,7 +1,8 @@
 import Vue from 'vue'
 import App from './App.vue'
-import router from './router'
+import { router } from './router'
 import moment from 'moment'
+
 const VueHighlightJS = require('vue-highlightjs')
 
 Vue.use(VueHighlightJS)
@@ -38,5 +39,5 @@ Vue.filter('dateType', (value: any) => {
 
 new Vue({
   router,
-  render: h => h(App)
+  render: h => h(App),
 }).$mount('#app')
