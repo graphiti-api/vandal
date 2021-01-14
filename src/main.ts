@@ -2,7 +2,6 @@ import Vue from 'vue'
 import App from './App.vue'
 import { router } from './router'
 import moment from 'moment'
-import store from "./store";
 
 const VueHighlightJS = require('vue-highlightjs')
 
@@ -12,7 +11,7 @@ Vue.config.productionTip = false
 
 Vue.mixin({
   methods: {
-    tempSet (obj, prop, val, duration, after = null) {
+    tempSet(obj, prop, val, duration, after = null) {
       let valueAfter = obj[prop]
       if (after !== null) {
         valueAfter = after
@@ -40,6 +39,5 @@ Vue.filter('dateType', (value: any) => {
 
 new Vue({
   router,
-  store,
   render: h => h(App),
 }).$mount('#app')
