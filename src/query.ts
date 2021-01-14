@@ -1,6 +1,8 @@
 import parameterize from "@/util/parameterize"
 import { ResponseTable } from "@/response-table"
 import moment from "moment"
+import SecureLS from "secure-ls";
+
 
 export class Query {
   resource: any
@@ -13,7 +15,10 @@ export class Query {
   fields: any
 
   data: any
+  payload: any
   headers: any[]
+  useRemoteUrl: boolean
+  remoteUrl: string
   json: any
   error: string
   hasRawError: boolean
@@ -36,6 +41,9 @@ export class Query {
     this.filters = [{ name: null, operator: 'eq', error: null }]
     this.data = {}
     this.headers = []
+    this.useRemoteUrl = false
+    this.remoteUrl = ''
+    this.payload = {}
     this.url = null
     this.urlWithDomain = null
     this.page = {}
@@ -54,7 +62,7 @@ export class Query {
     }
   }
 
-  derivePossibleRelationships() : any {
+  derivePossibleRelationships(): any {
     if (this.resource.polymorphic) {
       let relationships = Object.assign({}, this.resource.relationships)
       this.resource.children.forEach((name: string) => {
@@ -67,7 +75,7 @@ export class Query {
     }
   }
 
-  isShowRoute() : boolean {
+  isShowRoute(): boolean {
     return this.endpoint && this.endpoint.includes('#show')
   }
 
@@ -94,6 +102,10 @@ export class Query {
     let paramStr = parameterize(params)
     if (this.endpointIdParam) path = `${path}/${this.endpointIdParam}`
     if (paramStr.length > 0) path = `${path}?${paramStr}`
+    if (this.useRemoteUrl) {
+      const base = this.remoteUrl.split("/")
+      path = `${base[0]}//${base[2]}${path}`
+    }
     return path
   }
 
@@ -111,16 +123,74 @@ export class Query {
     this.url = this.generateUrl()
     this.urlWithDomain = `${window.location.origin}${this.url}`
 
-    let headers = new Headers()
-    headers.append('pragma', 'no-cache')
-    headers.append('cache-control', 'no-cache')
-    let init = { method: 'GET', headers }
+    let init = {
+      method: 'GET',
+      headers: this.setHeaders()
+    }
     let request = new Request(this.url)
-    this.json = await (await fetch(request)).json()
+    this.json = await (await fetch(request, init)).json()
     this.ready = true
     this.hasRawError = false
     this.error = null
 
+    this.handleError()
+  }
+
+  async create() {
+    this.url = this.generateUrl()
+    this.urlWithDomain = `${window.location.origin}${this.url}`
+
+    let init = {
+      method: 'POST',
+      headers: this.setHeaders(),
+      body: JSON.stringify(this.payload)
+    }
+    let request = new Request(this.url)
+    this.json = await (await fetch(request, init)).json()
+    this.ready = true
+    this.hasRawError = false
+    this.error = null
+
+    this.handleError()
+  }
+
+  async update(id: string) {
+    this.url = `${this.generateUrl()}/${id}`
+    this.urlWithDomain = `${window.location.origin}${this.url}/${id}`
+
+    let init = {
+      method: 'PATCH',
+      headers: this.setHeaders(),
+      body: JSON.stringify(this.payload)
+    }
+    let request = new Request(this.url)
+    this.json = await (await fetch(request, init)).json()
+    this.ready = true
+    this.hasRawError = false
+    this.error = null
+
+    this.handleError()
+  }
+
+  async destroy(id: string) {
+    this.url = `${this.generateUrl()}/${id}`
+    this.urlWithDomain = `${window.location.origin}${this.url}/${id}`
+
+
+    let init = {
+      method: 'DELETE',
+      headers: this.setHeaders()
+    }
+    let request = new Request(this.url)
+    this.json = await (await fetch(request, init)).json()
+    this.ready = true
+    this.hasRawError = false
+    this.error = null
+
+    this.handleError()
+  }
+
+  handleError() {
     if (this.json.errors) {
       let error = this.json.errors[0]
       let message = error.detail
@@ -134,7 +204,6 @@ export class Query {
       this.data = new ResponseTable(this.schema, this.resource, this.json, this.json.data, this.includeHash())
     }
   }
-
   // param generation
 
   filterParams() {
@@ -218,7 +287,7 @@ export class Query {
     return params
   }
 
-  includes() : string[] {
+  includes(): string[] {
     let _includes = [] as any
 
     Object.keys(this.relationships).forEach((k) => {
@@ -260,5 +329,28 @@ export class Query {
     })
 
     return _fields
+  }
+
+  setHeaders(): Headers {
+    let headers = new Headers()
+    headers.append('pragma', 'no-cache')
+    headers.append('cache-control', 'no-cache')
+    headers.append('content-type', 'application/json')
+
+    const ls = new SecureLS({ encodingType: "aes", isCompression: false });
+
+    for (var i = 0; true; i++) {
+      if (document.getElementById(`${i}_headerKey`) && document.getElementById(`${i}_headerValue`)) {
+        const key = (document.getElementById(`${i}_headerKey`) as HTMLInputElement).value
+        const value = (document.getElementById(`${i}_headerValue`) as HTMLInputElement).value
+        headers.append(key, value)
+        ls.set(`${i}_headerKey`, key)
+        ls.set(`${i}_headerValue`, value)
+      } else {
+        break;
+      }
+    }
+
+    return headers;
   }
 }

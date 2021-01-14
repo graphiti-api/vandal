@@ -1,5 +1,7 @@
 export class Schema {
   json: any
+  useCustomHost: boolean
+  remoteUrl: string
 
   constructor(json: any) {
     this.json = json
@@ -29,7 +31,7 @@ export class Schema {
   }
 
   async _processRemoteResources() {
-    this.json.resources.forEach( async (r) => {
+    this.json.resources.forEach(async (r) => {
       if (r.remote) {
         let split = r.remote.split('/')
         split.shift()
@@ -37,7 +39,7 @@ export class Schema {
         split.shift()
         let path = `/${split.join('/')}`
         split.pop()
-        let baseUrl  = `/${split.join('/')}`
+        let baseUrl = `/${split.join('/')}`
 
         split.pop()
 
@@ -46,9 +48,13 @@ export class Schema {
         let url
         let remoteSchema
         try {
-          url = `${baseUrl}/vandal/schema.json`
-          remoteSchema = await this._fetch(url) as any
-        } catch(e) {
+          if (this.useCustomHost) {
+            remoteSchema = await this._fetch(this.remoteUrl) as any
+          } else {
+            url = `${baseUrl}/vandal/schema.json`
+            remoteSchema = await this._fetch(url) as any
+          }
+        } catch (e) {
           url = `${baseUrl}/schema.json`
           remoteSchema = await this._fetch(url) as any
         }
@@ -97,6 +103,11 @@ export class Schema {
     let headers = new Headers()
     headers.append('pragma', 'no-cache')
     headers.append('cache-control', 'no-cache')
+
+    if (this.useCustomHost) {
+      headers.append("Access-Control-Allow-Origin", "*");
+    }
+
     let init = { method: 'GET', headers }
     let request = new Request(url)
     let schemaJson = await (await fetch(request, init)).json()

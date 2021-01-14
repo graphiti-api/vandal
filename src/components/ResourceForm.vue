@@ -1,24 +1,50 @@
 <template>
   <div class="resource-form">
     <form v-on:submit.prevent="$emit('submit')" class="config">
-      <button style="display: none" v-if="!isRelationship" type="hidden" class="btn btn-primary">Submit</button>
+      <button
+        style="display: none"
+        v-if="!isRelationship"
+        type="hidden"
+        class="btn btn-primary"
+      >
+        Submit
+      </button>
 
       <div class="query-inputs" :class="{ hide: query.editingRelationship }">
-        <div class="section filters first form-group">
+        <div v-if="isShowAction" class="section filters first form-group">
           <label>Filters</label>
           <a @click="addFilter" class="add">Add +</a>
 
           <transition-group name="form-input-section">
-            <div v-for="(filter, index) in query.filters" :key="index" class="form-group filter" :class="{ error: filter.error }">
+            <div
+              v-for="(filter, index) in query.filters"
+              :key="index"
+              class="form-group filter"
+              :class="{ error: filter.error }"
+            >
               <div class="clearfix form-group">
-                <select v-model="filter.name" class="filter-name col-8 float-left form-control">
+                <select
+                  v-model="filter.name"
+                  class="filter-name col-8 float-left form-control"
+                >
                   <option disabled value="null">Choose</option>
-                  <option v-for="(config, name) in query.resource.filters" :key="name">
+                  <option
+                    v-for="(config, name) in query.resource.filters"
+                    :key="name"
+                  >
                     {{ name }}
                   </option>
                 </select>
-                <select v-if="filter.name" v-model="filter.operator" class="col-3 float-left form-control">
-                  <option v-for="operator in query.resource.filters[filter.name].operators" :key="operator">
+                <select
+                  v-if="filter.name"
+                  v-model="filter.operator"
+                  class="col-3 float-left form-control"
+                >
+                  <option
+                    v-for="operator in query.resource.filters[filter.name]
+                      .operators"
+                    :key="operator"
+                  >
                     {{ operator }}
                   </option>
                 </select>
@@ -27,20 +53,52 @@
                 </select>
               </div>
 
-              <div class='clearfix'>
-                <div v-if="filter.name && query.resource.filters[filter.name].type === 'boolean'" class="boolean-toggle">
-                  <input v-model="filter.value" type="checkbox" :name="filter.name" :id="filter.name" class="ios-toggle" />
-                  <label :for="filter.name" class="checkbox-label" data-off="off" data-on="on"></label>
+              <div class="clearfix">
+                <div
+                  v-if="
+                    filter.name &&
+                    query.resource.filters[filter.name].type === 'boolean'
+                  "
+                  class="boolean-toggle"
+                >
+                  <input
+                    v-model="filter.value"
+                    type="checkbox"
+                    :name="filter.name"
+                    :id="filter.name"
+                    class="ios-toggle"
+                  />
+                  <label
+                    :for="filter.name"
+                    class="checkbox-label"
+                    data-off="off"
+                    data-on="on"
+                  ></label>
                 </div>
-                <div v-else-if="filter.name && query.resource.filters[filter.name].allow">
-                  <select v-model="filter.value" class="filter-value form-control col-10 float-left">
+                <div
+                  v-else-if="
+                    filter.name && query.resource.filters[filter.name].allow
+                  "
+                >
+                  <select
+                    v-model="filter.value"
+                    class="filter-value form-control col-10 float-left"
+                  >
                     <option disabled value="undefined">Choose</option>
-                    <option v-for="value in query.resource.filters[filter.name].allow" :key="value">
+                    <option
+                      v-for="value in query.resource.filters[filter.name].allow"
+                      :key="value"
+                    >
                       {{ value }}
                     </option>
                   </select>
                 </div>
-                <div v-else-if="filter.name && query.resource.filters[filter.name].type === 'date'">
+                <div
+                  v-else-if="
+                    filter.name &&
+                    query.resource.filters[filter.name].type === 'date'
+                  "
+                >
                   <input
                     v-model="filter.value"
                     type="text"
@@ -48,7 +106,12 @@
                     placeholder="M/D/YYYY"
                   />
                 </div>
-                <div v-else-if="filter.name && query.resource.filters[filter.name].type === 'datetime'">
+                <div
+                  v-else-if="
+                    filter.name &&
+                    query.resource.filters[filter.name].type === 'datetime'
+                  "
+                >
                   <input
                     v-model="filter.value"
                     type="text"
@@ -57,9 +120,14 @@
                   />
                 </div>
                 <div v-else>
-                  <input v-model="filter.value" type="text" class="filter-value float-left col-10 form-control" placeholder="Enter Filter Value Here" />
+                  <input
+                    v-model="filter.value"
+                    type="text"
+                    class="filter-value float-left col-10 form-control"
+                    placeholder="Enter Filter Value Here"
+                  />
                 </div>
-                <a @click="removeFilter(filter)" class='remove col-1'>x</a>
+                <a @click="removeFilter(filter)" class="remove col-1">x</a>
               </div>
 
               <div class="required-filter text-muted" v-if="filter.required">
@@ -69,15 +137,25 @@
           </transition-group>
         </div>
 
-        <div class="section sorts form-group">
+        <div v-if="isShowAction" class="section sorts form-group">
           <label>Sorts</label>
           <a @click="addSort" class="add">Add +</a>
 
           <transition-group name="form-input-section">
-            <div v-for="(sort, index) in query.sorts" :key="index" class='form-group clearfix'>
-              <select v-model="sort.name" class="filter-name col-7 float-left form-control">
+            <div
+              v-for="(sort, index) in query.sorts"
+              :key="index"
+              class="form-group clearfix"
+            >
+              <select
+                v-model="sort.name"
+                class="filter-name col-7 float-left form-control"
+              >
                 <option disabled value="null">Choose</option>
-                <option v-for="(config, name) in query.resource.sorts" :key="name">
+                <option
+                  v-for="(config, name) in query.resource.sorts"
+                  :key="name"
+                >
                   {{ name }}
                 </option>
               </select>
@@ -85,18 +163,31 @@
                 <option selected>asc</option>
                 <option>desc</option>
               </select>
-              <a @click="removeSort(sort)" class='remove col-1'>x</a>
+              <a @click="removeSort(sort)" class="remove col-1">x</a>
             </div>
           </transition-group>
         </div>
 
-        <div class="section form-pagination form-group">
+        <div v-if="isShowAction" class="section form-pagination form-group">
           <label>Pagination</label>
 
-          <div v-if="isShowAction || !isRelationship" class="form-group clearfix">
-            <input v-model="query.page.number" type="number" class="col-5 float-left form-control" placeholder="Number" />
-            <input v-model="query.page.size" type="number" class="col-5 float-left size form-control" placeholder="Size" />
-            <a @click="removePagination()" class='remove col-1'>x</a>
+          <div
+            v-if="isShowAction || !isRelationship"
+            class="form-group clearfix"
+          >
+            <input
+              v-model="query.page.number"
+              type="number"
+              class="col-5 float-left form-control"
+              placeholder="Number"
+            />
+            <input
+              v-model="query.page.size"
+              type="number"
+              class="col-5 float-left size form-control"
+              placeholder="Size"
+            />
+            <a @click="removePagination()" class="remove col-1">x</a>
           </div>
           <div v-else class="form-group clearfix text-muted">
             Only #show supports nested pagination
@@ -104,24 +195,62 @@
         </div>
       </div>
 
-      <div class="relationships section form-group" :class="{ 'editing-subrelationship': query.editingRelationship, nested: (query.editingRelationship && isRelationship), 'active-subrelationship': isActiveSubrelationship, 'inactive-subrelationship': !isActiveSubrelationship, ['depth-'+depth]: true }">
-        <label v-if="!(query.editingRelationship && isRelationship)">Relationships</label>
+      <div
+        v-if="isShowAction"
+        class="relationships section form-group"
+        :class="{
+          'editing-subrelationship': query.editingRelationship,
+          nested: query.editingRelationship && isRelationship,
+          'active-subrelationship': isActiveSubrelationship,
+          'inactive-subrelationship': !isActiveSubrelationship,
+          ['depth-' + depth]: true,
+        }"
+      >
+        <label v-if="!(query.editingRelationship && isRelationship)"
+          >Relationships</label
+        >
 
-        <div v-for="(config, name) in query.possibleRelationships" :key="name" class="relationship clearfix" :class="{ ['depth-'+depth]: true, selected: query.relationships[name], hide: (query.editingRelationship && query.editingRelationship != query.relationships[name]) }">
-          <a class='toggle clearfix' @click="toggleRelationship(name, config)">
-            <div class="float-left name">{{name}}</div>
+        <div
+          v-for="(config, name) in query.possibleRelationships"
+          :key="name"
+          class="relationship clearfix"
+          :class="{
+            ['depth-' + depth]: true,
+            selected: query.relationships[name],
+            hide:
+              query.editingRelationship &&
+              query.editingRelationship != query.relationships[name],
+          }"
+        >
+          <a class="toggle clearfix" @click="toggleRelationship(name, config)">
+            <div class="float-left name">{{ name }}</div>
 
             <span v-if="isActiveSubrelationship">
-              <div v-if="query.relationships[name]" class="badge badge-pill badge-info">&#x2713;</div>
+              <div
+                v-if="query.relationships[name]"
+                class="badge badge-pill badge-info"
+              >
+                &#x2713;
+              </div>
             </span>
           </a>
 
-          <a v-if="query.relationships[name]" @click="removeRelationship(name)" class="remove-field">Remove</a>
+          <a
+            v-if="query.relationships[name]"
+            @click="removeRelationship(name)"
+            class="remove-field"
+            >Remove</a
+          >
         </div>
       </div>
 
       <div v-for="(config, name) in query.relationships" :key="name">
-        <div v-if="query.relationships[name]" :class="{ hidden: query.editingRelationship != query.relationships[name] }">
+        <div
+          v-if="query.relationships[name]"
+          :class="{
+            hidden: query.editingRelationship != query.relationships[name],
+          }"
+        >
           <resource-form
             :query="query.relationships[name]"
             :schema="schema"
@@ -129,43 +258,77 @@
             @editRelationship="onSubrelationshipEdit"
             @doneEditRelationship="onSubrelationshipDoneEdit"
             :isShowAction="isShowAction"
-            :depth="depth+1"
+            :depth="depth + 1"
           />
         </div>
       </div>
 
-      <div class="fields section form-group" :class="{ hide: query.editingRelationship }">
+      <a class="toggle clearfix">
+        <div style="margin-top: 5%" v-if="isUpdateAction || isDestroyAction">
+          <span v-if="isUpdateAction" style="float: left">ID to update</span>
+          <span v-else style="float: left">ID to delete</span>
+          <span><input style="float: right" id="targetId" /></span>
+        </div>
+      </a>
+
+      <div
+        v-if="!isDestroyAction"
+        class="fields section form-group"
+        :class="{ hide: query.editingRelationship }"
+      >
         <label>Fields</label>
 
-        <div v-if="config.readable && name != 'id'" v-for="(config, name) in query.resource.attributes" :key="name" class="field clearfix" :class="{ selected: query.fields[name] }">
+        <div
+          v-if="config.readable && name != 'id'"
+          v-for="(config, name) in query.resource.attributes"
+          :key="name"
+          class="field clearfix"
+          :class="{ selected: query.fields[name] }"
+        >
           <a @click="toggleField(name, config)" class="toggle clearfix">
-            <span class="name">{{name}}</span>
-            <span v-if="query.fields[name]" class="badge badge-pill badge-info">&#x2713;</span>
+            <div v-if="isCreateAction || isUpdateAction">
+              <span>{{ name }}</span>
+              <span><input style="float: right" :id="name" /></span>
+            </div>
+            <div v-else-if="isShowAction">
+              <span class="name">{{ name }}</span>
+              <span
+                v-if="query.fields[name]"
+                class="badge badge-pill badge-info"
+                >&#x2713;</span
+              >
+            </div>
           </a>
         </div>
       </div>
-
     </form>
   </div>
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import Vue from 'vue'
 import { Query } from '@/query'
 
 export default Vue.extend({
   name: 'resource-form',
-  props: ['query', 'isShowAction', 'isRelationship', 'schema', 'depth'],
+  props: [
+    'query',
+    'isShowAction',
+    'isCreateAction',
+    'isUpdateAction',
+    'isDestroyAction',
+    'isRelationship',
+    'schema',
+    'depth',
+  ],
   data() {
     return {
       subRelationshipNames: [] as string[],
-      isActiveSubrelationship: false as boolean
+      isActiveSubrelationship: false as boolean,
+      payload: null as string,
     }
   },
-  created() {
-  },
-  computed: {
-  },
+  computed: {},
   methods: {
     addFilter() {
       this.query.filters.push({ name: null, operator: 'eq', error: null })
@@ -192,7 +355,7 @@ export default Vue.extend({
       }
     },
     removePagination() {
-      this.query.page = { number: null, size: null}
+      this.query.page = { number: null, size: null }
     },
     selectRelationship(name: string, config: any) {
       let subResource = this.schema.getResource(config.resource)
@@ -207,7 +370,7 @@ export default Vue.extend({
         subResource = {
           polymorphic: true,
           children: config.resources,
-          relationships
+          relationships,
         }
       }
       let relationshipPath = name
@@ -241,10 +404,12 @@ export default Vue.extend({
       this.$emit('doneEditRelationship', name)
     },
     toggleField(name: string) {
-      if (this.query.fields[name]) {
-        this.$delete(this.query.fields, name)
-      } else {
-        this.$set(this.query.fields, name, true)
+      if (this.isShowAction) {
+        if (this.query.fields[name]) {
+          this.$delete(this.query.fields, name)
+        } else {
+          this.$set(this.query.fields, name, true)
+        }
       }
     },
     onSubrelationshipEdit(name: string) {
@@ -252,8 +417,8 @@ export default Vue.extend({
     },
     onSubrelationshipDoneEdit(name: string) {
       this.isActiveSubrelationship = true
-    }
-  }
+    },
+  },
 })
 </script>
 
@@ -397,9 +562,10 @@ $warning: lighten(yellow, 20%);
       }
     }
 
-    &.inactive-subrelationship, &.active-subrelationship {
+    &.inactive-subrelationship,
+    &.active-subrelationship {
       .relationship .toggle {
-        padding: 0
+        padding: 0;
       }
 
       a.remove-field {
@@ -430,7 +596,7 @@ $warning: lighten(yellow, 20%);
 
     @for $i from 0 through 10 {
       .relationship.selected.depth-#{$i} {
-        padding-left: $i*14px;
+        padding-left: $i * 14px;
         padding-top: 0;
 
         @if $i != 0 {
@@ -497,8 +663,10 @@ $warning: lighten(yellow, 20%);
   // margin-right: 3px;
 }
 
-.relationships, .fields {
-  .relationship, .field {
+.relationships,
+.fields {
+  .relationship,
+  .field {
     border-bottom: 1px dashed darken(grey, 25%);
     text-align: left;
     cursor: pointer;
@@ -531,97 +699,101 @@ $warning: lighten(yellow, 20%);
   margin: auto;
   text-align: center;
 
-  .ios-toggle, .ios-toggle:active{
-    position:absolute;
-    top:-5000px;
-    height:0;
-    width:0;
-    opacity:0;
-    border:none;
-    outline:none;
+  .ios-toggle,
+  .ios-toggle:active {
+    position: absolute;
+    top: -5000px;
+    height: 0;
+    width: 0;
+    opacity: 0;
+    border: none;
+    outline: none;
   }
-  .checkbox-label{
-    display:block;
-    position:relative;
-    padding:10px;
-    margin-bottom:20px;
-    font-size:12px;
-    line-height:16px;
-    width:100%;
-    height:36px;
+  .checkbox-label {
+    display: block;
+    position: relative;
+    padding: 10px;
+    margin-bottom: 20px;
+    font-size: 12px;
+    line-height: 16px;
+    width: 100%;
+    height: 36px;
     /*border-radius*/
-    -webkit-border-radius:18px;
-      -moz-border-radius:18px;
-            border-radius:18px;
-    background:darken(#f8f8f8, 50%);
-    cursor:pointer;
+    -webkit-border-radius: 18px;
+    -moz-border-radius: 18px;
+    border-radius: 18px;
+    background: darken(#f8f8f8, 50%);
+    cursor: pointer;
   }
-  .checkbox-label:before{
-    content:'';
-    display:block;
-    position:absolute;
-    z-index:1;
-    line-height:34px;
-    text-indent:40px;
-    height:36px;
-    width:36px;
+  .checkbox-label:before {
+    content: '';
+    display: block;
+    position: absolute;
+    z-index: 1;
+    line-height: 34px;
+    text-indent: 40px;
+    height: 36px;
+    width: 36px;
     /*border-radius*/
-    -webkit-border-radius:100%;
-      -moz-border-radius:100%;
-            border-radius:100%;
-    top:0px;
-    left:0px;
-    right:auto;
+    -webkit-border-radius: 100%;
+    -moz-border-radius: 100%;
+    border-radius: 100%;
+    top: 0px;
+    left: 0px;
+    right: auto;
     background: #dddddd;
-    box-shadow: 0 3px 3px rgba(0,0,0,.6),0 0 0 0px darken(#dddddd, 60%);
+    box-shadow: 0 3px 3px rgba(0, 0, 0, 0.6), 0 0 0 0px darken(#dddddd, 60%);
   }
-  .checkbox-label:after{
-    content:attr(data-off);
-    display:block;
-    position:absolute;
-    z-index:0;
-    top:0;
-    left:-300px;
-    padding:10px;
-    height:100%;
-    width:300px;
-    text-align:right;
-    color:#bfbfbf;
-    white-space:nowrap;
+  .checkbox-label:after {
+    content: attr(data-off);
+    display: block;
+    position: absolute;
+    z-index: 0;
+    top: 0;
+    left: -300px;
+    padding: 10px;
+    height: 100%;
+    width: 300px;
+    text-align: right;
+    color: #bfbfbf;
+    white-space: nowrap;
   }
-  .ios-toggle:checked + .checkbox-label{
-    box-shadow:inset 0 0 0 20px darken($success, 5%),0 0 0 2px darken($success, 5%);
+  .ios-toggle:checked + .checkbox-label {
+    box-shadow: inset 0 0 0 20px darken($success, 5%),
+      0 0 0 2px darken($success, 5%);
   }
-  .ios-toggle:checked + .checkbox-label:before{
-    left:calc(100% - 36px);
-    box-shadow:0 0 0 2px transparent,0 3px 3px rgba(0,0,0,.3);
+  .ios-toggle:checked + .checkbox-label:before {
+    left: calc(100% - 36px);
+    box-shadow: 0 0 0 2px transparent, 0 3px 3px rgba(0, 0, 0, 0.3);
     background: white;
   }
-  .ios-toggle:checked + .checkbox-label:after{
-    content:attr(data-on);
-    left:60px;
-    width:36px;
+  .ios-toggle:checked + .checkbox-label:after {
+    content: attr(data-on);
+    left: 60px;
+    width: 36px;
   }
-  #checkbox1 + .checkbox-label{
-    box-shadow:inset 0 0 0 0px $success,0 0 0 2px #dddddd;
+  #checkbox1 + .checkbox-label {
+    box-shadow: inset 0 0 0 0px $success, 0 0 0 2px #dddddd;
   }
-  #checkbox1:checked + .checkbox-label{
-    box-shadow:inset 0 0 0 18px $success,0 0 0 2px $success;
+  #checkbox1:checked + .checkbox-label {
+    box-shadow: inset 0 0 0 18px $success, 0 0 0 2px $success;
   }
-  #checkbox1:checked + .checkbox-label:after{
+  #checkbox1:checked + .checkbox-label:after {
     color: $success;
   }
-  *,*:before,*:after{
-    box-sizing:border-box;
-    margin:0;
-    padding:0;
+  *,
+  *:before,
+  *:after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
     /*transition*/
-    -webkit-transition:.25s ease-in-out;
-      -moz-transition:.25s ease-in-out;
-        -o-transition:.25s ease-in-out;
-            transition:.25s ease-in-out;
-    outline:none;
-    font-family:Helvetica Neue,helvetica,arial,verdana,sans-serif;
+    -webkit-transition: 0.25s ease-in-out;
+    -moz-transition: 0.25s ease-in-out;
+    -o-transition: 0.25s ease-in-out;
+    transition: 0.25s ease-in-out;
+    outline: none;
+    font-family: Helvetica Neue, helvetica, arial, verdana, sans-serif;
   }
 }
 </style>
