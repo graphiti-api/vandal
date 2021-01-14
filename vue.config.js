@@ -1,6 +1,8 @@
 module.exports = {
   lintOnSave: false,
   devServer: {
-    proxy: process.env.PROXY
-  }
+    disableHostCheck: true,
+    proxy: process.env.PROXY,
+  },
+  baseUrl: ''
 }

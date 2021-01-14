@@ -10,6 +10,8 @@ $nav-tabs-link-active-bg: darken(grey, 40%);
 $success: lighten(green, 60%);
 $danger: lighten(red, 20%);
 $warning: lighten(yellow, 20%);
+$darkCard: #5c666f;
+$list-group-bg: $darkCard;
 
 .sizeable-link {
   display: inline-block;
@@ -55,27 +57,32 @@ $warning: lighten(yellow, 20%);
 }
 
 .nav-tabs {
-  border-bottom: 1px solid !important;
+  border-bottom: 1px solid darken(grey, 20%) !important;
+  // border-bottom: 1px solid !important;
 
   .nav-item {
-    border-bottom: 1px solid;
+    border-bottom: 1px solid darken(grey, 20%);
 
     .nav-link {
       color: #f0f0f0;
       font-weight: 600;
       letter-spacing: 1px;
       font-size: 110%;
+      border: none;
+
+      &:not(.active) {
+        &:hover {
+          background-color: lighten(#1a1a1a, 15%);
+        }
+      }
 
       &:hover {
-        border: none;
+        color: white;
       }
 
       &.active {
         color: white;
-
-        &:hover {
-          border: 1px solid;
-        }
+        border-color: transparent;
       }
     }
   }
@@ -101,7 +108,7 @@ $warning: lighten(yellow, 20%);
 
 body {
   // height:100vh;
-  background: url('/assets/img/squares.png');
+  background: url('assets/img/squares.png');
 
   .left-rail {
     flex-grow: 1;
@@ -126,41 +133,51 @@ body {
   letter-spacing: 1px;
 }
 
+@mixin table-cell {
+  word-wrap: break-word;
+  display: table-cell;
+}
+
+@mixin table-row {
+  clear: both;
+  display: table-row;
+}
+
 .table {
   $table: darken(grey, 30%);
   $border-radius: 5px;
-
+  margin-bottom: 0 !important;
   text-align: center;
   border: 1px solid black;
   width: 100%;
   background-color: $table;
   border-radius: $border-radius;
   box-shadow: inset 0px -1px 6px -1px black;
+  display: table;
+  table-layout: fixed;
   position: relative;
-  margin-bottom: 1rem;
 
   thead, .thead {
     @extend .clearfix;
     border-top: 1px solid black;
-    border-bottom: 1px solid black;
     border-radius: $border-radius $border-radius 0 0;
     box-shadow: inset 0px 3px 4px -1px black;
-    transform: scale(1, 1.1);
     line-height: 1rem;
     letter-spacing: 2px;
     font-weight: 300;
     color: rgba(255, 255, 255, 0.8);
     text-shadow: 1px 1px 2px darken($table, 20%);
 
-    tr {
-      border-top: 1px solid rgba(255,255,255,0.1);
-      border-bottom: 1px solid rgba(0,0,0,0.3);
+    .tr {
+      @include table-row;
+
+      .th {
+        @include table-cell;
+      }
     }
   }
 
   th, .th, thead th, .thead .th {
-    padding-to: 1rem;
-    padding-bottom: 1rem;
     border-bottom: none;
     border-top: none;
 
@@ -170,18 +187,29 @@ body {
   }
 
   tbody, .tbody {
-    tr, .tr {
-      &:nth-child(odd) {
-        border-top: 1px solid rgba(255,255,255,0.1);
-        border-bottom: 1px solid rgba(0,0,0,0.3);
-      }
+    width: 100%;
 
-      &:hover {
-        background-color: darken($table, 5%);
-      }
+    tr, .tr {
+      @include table-row;
 
       td {
+        padding: 10px 12px;
+      }
+
+      td, .td, .th {
+        @include table-cell;
         border-top: none;
+      }
+
+      .th {
+        font-size: 120%;
+        padding-top: 1.25rem;
+        padding-bottom: 1.25rem;
+        line-height: 1rem;
+        letter-spacing: 2px;
+        font-weight: 300;
+        color: rgba(255, 255, 255, 0.8);
+        text-shadow: 1px 1px 2px darken($table, 20%);
       }
     }
   }
@@ -208,6 +236,4 @@ a, a:not([href]):not([tabindex]) {
   margin-bottom: 10px;
   box-shadow: 0px -8px 13px 7px rgba(0, 0, 0, 1);
 }
-
-
 </style>

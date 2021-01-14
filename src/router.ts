@@ -4,13 +4,13 @@ import All from './views/All.vue'
 
 Vue.use(Router)
 
-export default new Router({
-  mode: 'history',
+export const router = new Router({
+  base: '',
   routes: [
     {
       path: '/',
-      name: 'graphici',
-      component: All
+      name: 'vandal',
+      component: All,
     }
   ]
 })
